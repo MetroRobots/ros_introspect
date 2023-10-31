@@ -1,4 +1,5 @@
 from ros_introspect import find_packages, Package
+from ros_introspect.package import PackageFile
 from test_finder import TEST_DATA_FOLDER
 import pytest
 import tempfile
@@ -16,6 +17,9 @@ def test_waymond():
     assert manifest.name == 'waymond'
     assert manifest.xml_format == 1
     assert manifest.std_tab == 2
+    assert str(manifest) == 'package.xml'
+
+    pkg.save()
 
 
 def test_kungfu():
@@ -25,6 +29,7 @@ def test_kungfu():
     assert manifest.name == 'kungfu'
     assert manifest.xml_format == 2
     assert manifest.std_tab == 4
+    assert str(pkg) != ''
 
     # Test Write
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
@@ -57,3 +62,18 @@ def test_bad_case3():
         Package(TEST_DATA_FOLDER / 'fake_git_root' / 'chad')
 
     assert 'Too many valid buildtool' in str(e_info)
+
+
+class FakeComponent(PackageFile):
+    pass
+
+
+def test_bad_component():
+    with pytest.raises(NotImplementedError):
+        FakeComponent.is_type('')
+    with pytest.raises(NotImplementedError):
+        FakeComponent.category_name()
+
+    fc = FakeComponent(TEST_DATA_FOLDER / 'jobu' / 'kpop', TEST_DATA_FOLDER)
+    with pytest.raises(NotImplementedError):
+        fc.write('')
