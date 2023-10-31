@@ -11,16 +11,16 @@ class PackageFile:
         self.rel_fn = full_path.relative_to(package_root)
         self.changed = False
 
-    @staticmethod
-    def is_singular():
+    @classmethod
+    def is_singular(cls):
         return False
 
-    @staticmethod
-    def is_type(path):
+    @classmethod
+    def is_type(cls, path):
         raise NotImplementedError
 
-    @staticmethod
-    def name():
+    @classmethod
+    def name(cls):
         raise NotImplementedError
 
     def save(self):
@@ -35,6 +35,22 @@ class PackageFile:
         return str(self.rel_fn)
 
 
+class SingularPackageFile(PackageFile):
+    @classmethod
+    def is_singular(cls):
+        return True
+
+    @classmethod
+    def is_type(cls, path):
+        return cls.name() == path.name
+
+
+class MiscPackageFile(PackageFile):
+    @classmethod
+    def name(cls):
+        return 'Other Files'
+
+
 def package_file(cls):
     """Decorator function to add to static list"""
     PackageFile.SUBTYPES.append(cls)
@@ -44,8 +60,7 @@ def infer_package_file(path, package_root):
     for subtype in PackageFile.SUBTYPES:
         if subtype.is_type(path):
             return subtype(path, package_root)
-    # Failing all else, return base class
-    return PackageFile(path, package_root)
+    return MiscPackageFile(path, package_root)
 
 
 class Package:
@@ -75,19 +90,16 @@ class Package:
 
     def __repr__(self):
         s = '== {} ==\n'.format(self.root.name)
-        for subtype in PackageFile.SUBTYPES + [PackageFile]:
+        for subtype in PackageFile.SUBTYPES + [MiscPackageFile]:
             if not self.components_by_type[subtype]:
                 continue
             if subtype.is_singular():
                 # should only be one
                 assert len(self.components_by_type[subtype]) == 1
                 single = self.components_by_type[subtype][0]
-                s += f'  {single.rel_fn}'
+                s += f'  {single.rel_fn}\n'
             else:
-                if subtype == PackageFile:
-                    s += '  Other Files\n'
-                else:
-                    s += '  {subtype.name()}\n'
+                s += f'  {subtype.name()}\n'
                 for package_file in self.components_by_type[subtype]:
                     s += f'    {package_file}\n'
         return s
