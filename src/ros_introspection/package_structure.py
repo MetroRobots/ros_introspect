@@ -2,38 +2,11 @@ import collections
 import os
 
 from .source_code_file import is_python_hashbang_line
+from ros_introspect.finder import is_repo_marker
 
 KEY = ['package.xml', 'CMakeLists.txt', 'setup.py']
 SRC_EXTS = ['.py', '.cpp', '.h', '.hpp', '.c', '.cc']
 GENERATORS = ['.msg', '.srv', '.action']
-REPO_MARKERS = ['.git', '.svn', 'fake_git_root']
-
-
-def is_repo_root(folder):
-    # Look for repo metadata (or fake_git_root for testing purposes)
-    for marker in REPO_MARKERS:
-        if os.path.exists(os.path.join(folder, marker)):
-            return True
-    return False
-
-
-def is_repo_marker(folder):
-    for marker in REPO_MARKERS:
-        if marker in folder:
-            return True
-    return False
-
-
-def get_repo_root(package):
-    repo_root = os.path.abspath(package.root)
-
-    while not is_repo_root(repo_root):
-        parent_dir = os.path.abspath(os.path.join(repo_root, os.pardir))
-        if repo_root == parent_dir:
-            raise RuntimeError('Cannot find repo root: ' + str(package.root))
-
-        repo_root = parent_dir
-    return repo_root
 
 
 def get_filetype_by_contents(filename, ext):
