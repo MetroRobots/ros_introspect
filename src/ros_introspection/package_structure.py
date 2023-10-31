@@ -6,7 +6,6 @@ from ros_introspect.finder import is_repo_marker
 
 KEY = ['package.xml', 'CMakeLists.txt', 'setup.py']
 SRC_EXTS = ['.py', '.cpp', '.h', '.hpp', '.c', '.cc']
-GENERATORS = ['.msg', '.srv', '.action']
 
 
 def get_filetype_by_contents(filename, ext):
@@ -44,8 +43,6 @@ def get_package_structure(pkg_root):
                 structure['launch'][rel_fn] = full
             elif ext in SRC_EXTS:
                 structure['source'][rel_fn] = full
-            elif ext in GENERATORS:
-                structure['generators'][rel_fn] = full
             elif ext == '.cfg' and 'cfg/' in full:
                 structure['cfg'][rel_fn] = full
             elif ext in ['.urdf', '.xacro']:

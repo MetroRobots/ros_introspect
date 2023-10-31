@@ -1,5 +1,8 @@
 import collections
 from .finder import find_package_roots
+from enum import IntEnum
+
+DependencyType = IntEnum('DependencyType', ['BUILD', 'RUN', 'TEST'])
 
 
 class PackageFile:
@@ -22,6 +25,9 @@ class PackageFile:
     @classmethod
     def category_name(cls):
         raise NotImplementedError
+
+    def get_dependencies(self, dependency_type):
+        return set()
 
     def save(self):
         if not self.changed:
@@ -94,10 +100,19 @@ class Package:
             assert not hasattr(self, attr_name)
             setattr(self, attr_name, package_file)
 
-    def save(self):
+    def __iter__(self):
         for components in self.components_by_type.values():
-            for component in components:
-                component.save()
+            yield from components
+
+    def get_dependencies(self, dependency_type):
+        deps = set()
+        for component in self:
+            deps |= component.get_dependencies(dependency_type)
+        return deps
+
+    def save(self):
+        for component in self:
+            component.save()
 
     def __repr__(self):
         s = '== {} ({})==\n'.format(self.name, self.build_type)

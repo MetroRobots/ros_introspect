@@ -1,4 +1,4 @@
-from ..package import PackageFile, package_file
+from ..package import PackageFile, package_file, DependencyType
 import re
 
 AT_LEAST_THREE_DASHES = re.compile(r'^\-{3,}\r?$')
@@ -64,8 +64,6 @@ class ROSInterface(PackageFile):
         self.name = full_path.stem
         self.sections = [InterfaceSection()]
 
-        self.dependencies = set()
-
         with open(full_path) as f:
             self.contents = f.read()
 
@@ -76,20 +74,23 @@ class ROSInterface(PackageFile):
             else:
                 self.sections[-1].add_line(line)
 
+    @classmethod
+    def is_type(cls, path):
+        return cls.suffix == path.suffix
+
+    def get_dependencies(self, dependency_type):
+        deps = set()
+        if dependency_type != DependencyType.BUILD:
+            return deps
+
         for section in self.sections:
             for field in section.fields:
                 if '/' not in field.type:
                     continue
-                package, part = field.type.split('/')
-                if package != self.name:
-                    self.dependencies.add(package)
+                package = field.type.split('/')[0]
+                deps.add(package)
 
-        if self.type == 'action':
-            self.dependencies.add('actionlib_msgs')
-
-    @classmethod
-    def is_type(cls, path):
-        return cls.suffix == path.suffix
+        return deps
 
     def output(self):
         return '---\n'.join(map(str, self.sections))
@@ -127,3 +128,8 @@ class ROSAction(ROSInterface):
     @classmethod
     def category_name(cls):
         return 'Actions'
+
+    def get_dependencies(self, dependency_type):
+        deps = super().get_dependencies(dependency_type)
+        deps.add('actionlib_msgs')
+        return deps
