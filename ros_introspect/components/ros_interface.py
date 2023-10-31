@@ -1,4 +1,4 @@
-import os.path
+from ..package import PackageFile, package_file
 import re
 
 AT_LEAST_THREE_DASHES = re.compile(r'^\-{3,}\r?$')
@@ -7,7 +7,7 @@ PRIMITIVES = ['bool', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'in
               'float32', 'float64', 'string', 'time', 'duration']
 
 
-class GeneratorField:
+class InterfaceField:
     def __init__(self, field_type, is_array, name, value):
         self.type = field_type
         self.is_array = is_array
@@ -26,7 +26,7 @@ class GeneratorField:
         return s
 
 
-class GeneratorSection:
+class InterfaceSection:
     def __init__(self):
         self.contents = []
         self.fields = []
@@ -42,7 +42,7 @@ class GeneratorSection:
         m = FIELD_LINE.match(line)
         if m:
             field_type, is_array, name, value, comment = m.groups()
-            field = GeneratorField(field_type, is_array, name, value)
+            field = InterfaceField(field_type, is_array, name, value)
             self.contents.append(field)
             self.fields.append(field)
             if comment:
@@ -50,31 +50,28 @@ class GeneratorSection:
             else:
                 self.contents.append('\n')
         else:
-            raise Exception('Unable to parse generator line: ' + repr(line))
+            raise Exception('Unable to parse interface line: ' + repr(line))
 
     def __repr__(self):
         return ''.join(map(str, self.contents))
 
 
-class ROSGenerator:
-    def __init__(self, rel_fn, file_path):
-        self.rel_fn = rel_fn
-        self.file_path = file_path
-        parts = os.path.splitext(rel_fn)
-        self.base_name = os.path.split(parts[0])[-1]
-        self.type = parts[-1][1:]  # Just the extension, no dot
-        self.name = os.path.basename(rel_fn)
-        self.changed = False
-        self.sections = [GeneratorSection()]
+class ROSInterface(PackageFile):
+    def __init__(self, full_path, package_root):
+        super().__init__(full_path, package_root)
+
+        self.type = full_path.suffix[1:]  # Just the extension, no dot
+        self.name = full_path.stem
+        self.sections = [InterfaceSection()]
 
         self.dependencies = set()
 
-        with open(file_path) as f:
+        with open(full_path) as f:
             self.contents = f.read()
 
         for line in self.contents.split('\n'):
             if AT_LEAST_THREE_DASHES.match(line):
-                self.sections.append(GeneratorSection())
+                self.sections.append(InterfaceSection())
                 continue
             else:
                 self.sections[-1].add_line(line)
@@ -90,14 +87,43 @@ class ROSGenerator:
         if self.type == 'action':
             self.dependencies.add('actionlib_msgs')
 
+    @classmethod
+    def is_type(cls, path):
+        return cls.suffix == path.suffix
+
     def output(self):
         return '---\n'.join(map(str, self.sections))
 
-    def write(self):
-        if not self.changed:
-            return
-        with open(self.file_path, 'w') as f:
+    def write(self, output_path):
+        with open(output_path, 'w') as f:
             f.write(self.output())
 
     def __repr__(self):
         return self.name
+
+
+@package_file
+class ROSMsg(ROSInterface):
+    suffix = '.msg'
+
+    @classmethod
+    def category_name(cls):
+        return 'Messages'
+
+
+@package_file
+class ROSSrv(ROSInterface):
+    suffix = '.srv'
+
+    @classmethod
+    def category_name(cls):
+        return 'Services'
+
+
+@package_file
+class ROSAction(ROSInterface):
+    suffix = '.action'
+
+    @classmethod
+    def category_name(cls):
+        return 'Actions'
