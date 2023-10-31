@@ -28,7 +28,7 @@ class PackageFile:
             return
         self.write(self.full_path)
 
-    def write(self, output_fn):
+    def write(self, output_path):
         raise NotImplementedError
 
     def __repr__(self):
@@ -79,9 +79,20 @@ class Package:
                 else:
                     self.add_file(infer_package_file(subpath, self.root))
 
+        # Get Key Properties from Manifest
+        assert self.package_xml
+        self.name = self.package_xml.name
+        self.build_type = self.package_xml.build_type
+
     def add_file(self, package_file):
-        self.components_by_type[type(package_file)].append(package_file)
+        subtype = type(package_file)
+        self.components_by_type[subtype].append(package_file)
         self.components_by_name[package_file.rel_fn].append(package_file)
+
+        attr_name = subtype.category_name().replace('.', '_')
+        if subtype.is_singular():
+            assert not hasattr(self, attr_name)
+            setattr(self, attr_name, package_file)
 
     def save(self):
         for components in self.components_by_type.values():
@@ -89,7 +100,7 @@ class Package:
                 component.save()
 
     def __repr__(self):
-        s = '== {} ==\n'.format(self.root.name)
+        s = '== {} ({})==\n'.format(self.name, self.build_type)
         for subtype in PackageFile.SUBTYPES + [MiscPackageFile]:
             if not self.components_by_type[subtype]:
                 continue

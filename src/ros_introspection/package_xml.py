@@ -1,30 +1,11 @@
+from ros_introspect.components.package_xml import INITIAL_TAGS, MBLOCK_TAGS, DEPEND_TAGS, FINAL_TAGS, PEOPLE_TAGS
+from ros_introspect.components.package_xml import INDENT_PATTERN, FORMAT_3_HEADER
 import collections
-import operator
-import re
-from xml.dom.minidom import parse
-
-INITIAL_ORDERING = ['name', 'version', 'description']
-MBLOCK_ORDERING = ['maintainer', 'license', 'url', 'author']
-DEPEND_ORDERING = ['buildtool_depend', 'buildtool_export_depend', 'depend', 'build_depend', 'build_export_depend',
-                   'run_depend', 'exec_depend', 'test_depend', 'doc_depend']
-FINAL_ORDERING = ['group_depend', 'member_of_group', 'export']
 
 # In most manifests, the ordering of the mblock doesn't matter, but we sort the depends
-ORDERING = INITIAL_ORDERING + [MBLOCK_ORDERING] + DEPEND_ORDERING + FINAL_ORDERING
+ORDERING = INITIAL_TAGS + [MBLOCK_TAGS] + DEPEND_TAGS + FINAL_TAGS
 # In V3 manifests, we ensure the mblock is sorted, but not the depends
-ORDERING_V3 = INITIAL_ORDERING + MBLOCK_ORDERING + DEPEND_ORDERING + FINAL_ORDERING
-
-INDENT_PATTERN = re.compile('\n *')
-
-PEOPLE_TAGS = ['maintainer', 'author']
-
-BUILD_TYPES = {'catkin', 'ament_python', 'ament_cmake', 'cmake'}
-
-FORMAT_3_HEADER = """<?xml version="1.0"?>
-<?xml-model
-  href="http://download.ros.org/schema/package_format3.xsd"
-  schematypens="http://www.w3.org/2001/XMLSchema"?>
-"""
+ORDERING_V3 = INITIAL_TAGS + MBLOCK_TAGS + DEPEND_TAGS + FINAL_TAGS
 
 
 def get_ordering_index(name, whiny=True, manifest_version=None):
@@ -34,7 +15,7 @@ def get_ordering_index(name, whiny=True, manifest_version=None):
         ordering = ORDERING
 
     for i, o in enumerate(ordering):
-        if type(o) == list:
+        if isinstance(o, list):
             if name in o:
                 return i
         elif name == o:
@@ -42,20 +23,6 @@ def get_ordering_index(name, whiny=True, manifest_version=None):
     if name and whiny:
         print('\tUnsure of ordering for ' + name)
     return len(ordering)
-
-
-def get_package_tag_index(s, key='<package'):
-    if key not in s:
-        return 0
-    return s.index(key)
-
-
-def count_trailing_spaces(s):
-    c = 0
-    # TODO: Support tabs
-    while c < len(s) and s[-c - 1] == ' ':
-        c += 1
-    return c
 
 
 def replace_package_set(manifest, source_tags, new_tag):
@@ -73,74 +40,6 @@ def replace_package_set(manifest, source_tags, new_tag):
 
 
 class PackageXML:
-    def __init__(self, fn):
-        self.fn = fn
-        self.tree = parse(fn)
-        self.root = self.tree.getElementsByTagName('package')[0]
-        contents = open(fn).read()
-        self.header = contents[:get_package_tag_index(contents)]
-        self._name = None
-        self._format = None
-        self._std_tab = None
-        self._build_type = None
-        self.changed = False
-
-    @property
-    def name(self):
-        if self._name is not None:
-            return self._name
-        name_tags = self.root.getElementsByTagName('name')
-        if not name_tags:
-            return
-        name_tag = name_tags[0]
-        self._name = name_tag.firstChild.nodeValue
-        return self._name
-
-    @property
-    def format(self):  # TODO(dlu): Don't shadow build in python format function
-        if self._format is not None:
-            return self._format
-        if not self.root.hasAttribute('format'):
-            self._format = 1
-        else:
-            self._format = int(self.root.attributes['format'].value)
-        return self._format
-
-    @property
-    def build_type(self):
-        if self._build_type is not None:
-            return self._build_type
-
-        build_types = set()
-
-        for tag in self.root.getElementsByTagName('build_type') + self.root.getElementsByTagName('buildtool_depend'):
-            value = tag.firstChild.nodeValue
-            if value in BUILD_TYPES:
-                build_types.add(value)
-
-        if len(build_types) == 1:
-            self._build_type = list(build_types)[0]
-            return self._build_type
-        elif not build_types:
-            raise RuntimeError('Unable to determine buildtool type in {}'.format(self.fn))
-        else:
-            raise RuntimeError('Too many valid buildtool types')
-
-    @property
-    def std_tab(self):
-        if self._std_tab is not None:
-            return self._std_tab
-        tab_ct = collections.defaultdict(int)
-        for c in self.root.childNodes:
-            if c.nodeType == c.TEXT_NODE:
-                spaces = count_trailing_spaces(c.data)
-                tab_ct[spaces] += 1
-        if len(tab_ct) == 0:
-            self._std_tab = 4
-        else:
-            self._std_tab = max(tab_ct.items(), key=operator.itemgetter(1))[0]
-        return self._std_tab
-
     def get_packages_by_tag(self, tag):
         pkgs = []
         for el in self.root.getElementsByTagName(tag):
@@ -210,7 +109,7 @@ class PackageXML:
         indexes = self.get_child_indexes()
         # If there are elements of this type already
         if tag in indexes:
-            if len(indexes[tag]) == 1 and tag in DEPEND_ORDERING:
+            if len(indexes[tag]) == 1 and tag in DEPEND_TAGS:
                 start, end = indexes[tag][0]
                 tag_values = []
                 my_index = start
@@ -257,7 +156,7 @@ class PackageXML:
                 return indexes[best_tag][-1][1]
 
     def insert_new_tag(self, tag):
-        if tag.tagName in DEPEND_ORDERING:
+        if tag.tagName in DEPEND_TAGS:
             value = tag.firstChild.data
         else:
             value = None
@@ -468,17 +367,3 @@ class PackageXML:
             self.header = FORMAT_3_HEADER
 
         self.changed = True
-
-    def write(self, new_fn=None):
-        if new_fn is None:
-            new_fn = self.fn
-
-        if new_fn == self.fn and not self.changed:
-            return
-
-        s = self.tree.toxml(self.tree.encoding)
-        index = get_package_tag_index(s)
-        s = self.header + s[index:] + '\n'
-
-        with open(new_fn, 'wb') as f:
-            f.write(s.encode('UTF-8'))

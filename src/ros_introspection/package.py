@@ -3,7 +3,6 @@ import collections
 from .cmake_parser import parse_file
 from .launch import LaunchPy, LaunchXML
 from .package_structure import get_package_structure
-from .package_xml import PackageXML
 from .plugin_xml import PluginXML
 from .ros_generator import ROSGenerator
 from .rviz_config import RVizConfig
@@ -15,9 +14,6 @@ from .urdf import UrdfFile
 
 class Package:
     def __init__(self, root):
-        self.manifest = PackageXML(self.root + '/package.xml')
-        self.name = self.manifest.name
-        self.build_type = self.manifest.build_type
         self._ros_version = None
         self.cmake = parse_file(self.root + '/CMakeLists.txt')
 
