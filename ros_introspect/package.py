@@ -20,7 +20,7 @@ class PackageFile:
         raise NotImplementedError
 
     @classmethod
-    def name(cls):
+    def category_name(cls):
         raise NotImplementedError
 
     def save(self):
@@ -42,12 +42,12 @@ class SingularPackageFile(PackageFile):
 
     @classmethod
     def is_type(cls, path):
-        return cls.name() == path.name
+        return cls.category_name() == path.name
 
 
 class MiscPackageFile(PackageFile):
     @classmethod
-    def name(cls):
+    def category_name(cls):
         return 'Other Files'
 
 
@@ -99,7 +99,7 @@ class Package:
                 single = self.components_by_type[subtype][0]
                 s += f'  {single.rel_fn}\n'
             else:
-                s += f'  {subtype.name()}\n'
+                s += f'  {subtype.category_name()}\n'
                 for package_file in self.components_by_type[subtype]:
                     s += f'    {package_file}\n'
         return s
