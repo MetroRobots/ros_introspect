@@ -9,7 +9,7 @@ TEST_DATA_FOLDER = ROOT_FOLDER / 'test_data'
 
 def test_package_finder():
     roots = list(find_package_roots(TEST_DATA_FOLDER))
-    assert len(roots) == 3
+    assert len(roots) == 4
 
 
 def test_repo_root():
@@ -27,7 +27,8 @@ def test_siblings():
     w_sibs = list(find_sibling_package_roots(waymond))
     assert len(w_sibs) == 0
 
-    hibachi = TEST_DATA_FOLDER / 'eleanor' / 'hibachi'
+    hibachi = TEST_DATA_FOLDER / 'eleanor' / 'eeaao'
     e_sibs = list(find_sibling_package_roots(hibachi))
-    assert len(e_sibs) == 1
-    assert e_sibs[0].name == 'kungfu'
+    assert len(e_sibs) == 2
+    names = [sib.name for sib in e_sibs]
+    assert 'kungfu' in names

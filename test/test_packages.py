@@ -7,7 +7,7 @@ import tempfile
 
 def test_find_packages():
     pkgs = list(find_packages(TEST_DATA_FOLDER))
-    assert len(pkgs) == 3
+    assert len(pkgs) == 4
 
 
 def test_waymond():
@@ -20,6 +20,10 @@ def test_waymond():
     assert str(manifest) == 'package.xml'
 
     pkg.save()
+
+    people = manifest.get_people()
+    assert len(people) == 1
+    assert manifest.get_license() == 'BSD 3-clause'
 
 
 def test_kungfu():
@@ -40,6 +44,14 @@ def test_kungfu():
     assert original == s
     temp.close()
 
+    assert not manifest.is_metapackage()
+
+
+def test_meta():
+    pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'eeaao')
+    # assert pkg.is_metapackage() TODO: Implement when we have CMake
+    assert pkg.package_xml.is_metapackage()
+
 
 def test_bad_case():
     pkg = Package(TEST_DATA_FOLDER / 'jobu' / 'kpop')
@@ -48,6 +60,7 @@ def test_bad_case():
     assert manifest.name is None
     assert manifest.xml_format == 1
     assert manifest.std_tab == 0
+    assert manifest.get_license() is None
 
 
 def test_bad_case2():

@@ -4,6 +4,8 @@ import re
 import collections
 import operator
 
+Person = collections.namedtuple('Person', 'name email')
+
 INITIAL_TAGS = ['name', 'version', 'description']
 MBLOCK_TAGS = ['maintainer', 'license', 'url', 'author']
 DEPEND_TAGS = ['buildtool_depend', 'buildtool_export_depend', 'depend', 'build_depend', 'build_export_depend',
@@ -99,6 +101,44 @@ class PackageXML(SingularPackageFile):
                 tab_ct[spaces] += 1
         if tab_ct:
             return max(tab_ct.items(), key=operator.itemgetter(1))[0]
+
+    def get_elements_by_tags(self, tags):
+        elements = []
+        for tag in tags:
+            elements += self.root.getElementsByTagName(tag)
+        return elements
+
+    def get_packages_by_tag(self, tag):
+        pkgs = []
+        for el in self.root.getElementsByTagName(tag):
+            pkgs.append(el.childNodes[0].nodeValue)
+        return pkgs
+
+    def get_people(self):
+        people = []
+        for el in self.get_elements_by_tags(PEOPLE_TAGS):
+            name = el.childNodes[0].nodeValue
+            email = el.getAttribute('email')
+            people.append(Person(name, email))
+        return people
+
+    def get_license_element(self):
+        els = self.root.getElementsByTagName('license')
+        if els:
+            return els[0]
+
+    def get_license(self):
+        el = self.get_license_element()
+        if el:
+            return el.childNodes[0].nodeValue
+
+    def is_metapackage(self):
+        for node in self.root.getElementsByTagName('export'):
+            for child in node.childNodes:
+                if child.nodeType == child.ELEMENT_NODE:
+                    if child.nodeName == 'metapackage':
+                        return True
+        return False
 
     def write(self, output_path):
         s = self.tree.toxml(self.tree.encoding)

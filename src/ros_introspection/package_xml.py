@@ -40,12 +40,6 @@ def replace_package_set(manifest, source_tags, new_tag):
 
 
 class PackageXML:
-    def get_packages_by_tag(self, tag):
-        pkgs = []
-        for el in self.root.getElementsByTagName(tag):
-            pkgs.append(el.childNodes[0].nodeValue)
-        return pkgs
-
     def get_packages(self, mode='build'):
         keys = []
         if mode == 'build':
@@ -253,20 +247,6 @@ class PackageXML:
                     print('\tRemoving %s %s' % (name, pkg))
                 self.remove_element(el)
 
-    def get_elements_by_tags(self, tags):
-        elements = []
-        for tag in tags:
-            elements += self.root.getElementsByTagName(tag)
-        return elements
-
-    def get_people(self):
-        people = []
-        for el in self.get_elements_by_tags(PEOPLE_TAGS):
-            name = el.childNodes[0].nodeValue
-            email = el.getAttribute('email')
-            people.append((name, email))
-        return people
-
     def update_people(self, target_name, target_email=None, search_name=None, search_email=None):
         for el in self.get_elements_by_tags(PEOPLE_TAGS):
             name = el.childNodes[0].nodeValue
@@ -278,29 +258,11 @@ class PackageXML:
                 print('\tReplacing %s %s/%s with %s/%s' % (el.nodeName, name, email, target_name, target_email))
                 self.changed = True
 
-    def get_license_element(self):
-        els = self.root.getElementsByTagName('license')
-        if len(els) == 0:
-            return None
-        return els[0]
-
-    def get_license(self):
-        el = self.get_license_element()
-        return el.childNodes[0].nodeValue
-
     def set_license(self, license_str):
         el = self.get_license_element()
         if license != el.childNodes[0].nodeValue:
             el.childNodes[0].nodeValue = license_str
             self.changed = True
-
-    def is_metapackage(self):
-        for node in self.root.getElementsByTagName('export'):
-            for child in node.childNodes:
-                if child.nodeType == child.ELEMENT_NODE:
-                    if child.nodeName == 'metapackage':
-                        return True
-        return False
 
     def get_plugin_xmls(self):
         """Return a mapping from the package name to a list of the relative path(s) for the plugin xml(s)."""
