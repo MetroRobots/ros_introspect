@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+
+from ros_introspection.cmake import get_ordering, get_sort_key, CommandGroup
+from ros_introspection.util import get_packages
+
+
+def print_cmake_order(cmake, indent=0):
+    indent_s = ' ' * (indent * 21)
+    print(f'{indent_s}Existing Style: {cmake.existing_style}\n')
+    anchors = cmake.get_ordered_build_targets()
+    ordering = get_ordering(cmake.get_desired_style())
+    for content in cmake.contents:
+        if isinstance(content, str):
+            continue
+        first, second = get_sort_key(content, anchors, ordering)
+        if isinstance(content, CommandGroup):
+            s = str(content.initial_tag) + ' ... ' + str(content.close_tag)
+        else:
+            s = str(content)
+        clean = s.replace('\n', ' ').replace('  ', ' ')
+        print(f'{indent_s}{first:4} {str(second)[:15]:15} {clean}')
+
+        if isinstance(content, CommandGroup):
+            print_cmake_order(content.sub, indent + 1)
+
+
+for package in get_packages():
+    if package.cmake:
+        print_cmake_order(package.cmake)
