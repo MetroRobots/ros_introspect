@@ -47,13 +47,13 @@ class PackageXML(SingularPackageFile):
         super().__init__(full_path, package_root)
         contents = open(full_path).read()
         self.tree = parse_xml(contents)
-        self.root = self.tree.getElementsByTagName('package')[0]
+        package_tags = self.tree.getElementsByTagName('package')
+        if not package_tags:
+            self.tree = parse_xml('<package />')
+            package_tags = self.tree.getElementsByTagName('package')
+        self.root = package_tags[0]
 
         self.header = contents[:get_package_tag_index(contents)]
-        self._name = None
-        self._format = None
-        self._std_tab = None
-        self._build_type = None
 
     @classmethod
     def category_name(cls):
@@ -61,30 +61,21 @@ class PackageXML(SingularPackageFile):
 
     @property
     def name(self):
-        if self._name is not None:
-            return self._name
         name_tags = self.root.getElementsByTagName('name')
         if not name_tags:
             return
         name_tag = name_tags[0]
-        self._name = name_tag.firstChild.nodeValue
-        return self._name
+        return name_tag.firstChild.nodeValue
 
     @property
     def xml_format(self):
-        if self._format is not None:
-            return self._format
         if not self.root.hasAttribute('format'):
-            self._format = 1
+            return 1
         else:
-            self._format = int(self.root.attributes['format'].value)
-        return self._format
+            return int(self.root.attributes['format'].value)
 
     @property
     def build_type(self):
-        if self._build_type is not None:
-            return self._build_type
-
         build_types = set()
 
         for tag in self.root.getElementsByTagName('build_type') + self.root.getElementsByTagName('buildtool_depend'):
@@ -93,8 +84,7 @@ class PackageXML(SingularPackageFile):
                 build_types.add(value)
 
         if len(build_types) == 1:
-            self._build_type = list(build_types)[0]
-            return self._build_type
+            return list(build_types)[0]
         elif not build_types:
             raise RuntimeError('Unable to determine buildtool type in {}'.format(self.full_path))
         else:
@@ -102,20 +92,15 @@ class PackageXML(SingularPackageFile):
 
     @property
     def std_tab(self):
-        if self._std_tab is not None:
-            return self._std_tab
         tab_ct = collections.defaultdict(int)
         for c in self.root.childNodes:
             if c.nodeType == c.TEXT_NODE:
                 spaces = count_trailing_spaces(c.data)
                 tab_ct[spaces] += 1
-        if len(tab_ct) == 0:
-            self._std_tab = 4
-        else:
-            self._std_tab = max(tab_ct.items(), key=operator.itemgetter(1))[0]
-        return self._std_tab
+        if tab_ct:
+            return max(tab_ct.items(), key=operator.itemgetter(1))[0]
 
-    def save(self, output_path):
+    def write(self, output_path):
         s = self.tree.toxml(self.tree.encoding)
         index = get_package_tag_index(s)
         s = self.header + s[index:] + '\n'
