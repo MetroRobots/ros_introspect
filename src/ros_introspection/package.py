@@ -15,7 +15,6 @@ from .urdf import UrdfFile
 
 class Package:
     def __init__(self, root):
-        self.root = root
         self.manifest = PackageXML(self.root + '/package.xml')
         self.name = self.manifest.name
         self.build_type = self.manifest.build_type
@@ -115,43 +114,3 @@ class Package:
             else:
                 self._ros_version = 2
         return self._ros_version
-
-    def write(self):
-        self.manifest.write()
-        if self.cmake:
-            self.cmake.write()
-        for plugin_config in self.plugin_configs:
-            plugin_config.write()
-        if self.setup_cfg:
-            self.setup_cfg.write()
-        if self.setup_py:
-            self.setup_py.write()
-        for gen in self.get_all_generators():
-            gen.write()
-        for src in self.source_code.sources.values():
-            src.write()
-        for config in self.rviz_configs:
-            config.write()
-
-    def __repr__(self):
-        s = '== {} ({})========\n'.format(self.name, self.build_type)
-        s += '  package.xml\n'
-        s += '  CMakeLists.txt\n'
-        if self.setup_py:
-            s += '  setup.py\n'
-        components = {'source': str(self.source_code),
-                      'launch': '\n'.join(map(str, self.launches)),
-                      'dynamic reconfigure configs': '\n'.join(self.dynamic_reconfigs),
-                      'plugin configs': '\n'.join([cfg.rel_fn for cfg in self.plugin_configs]),
-                      'urdf models': '\n'.join(map(str, self.urdf_files)),
-                      '{misc}': '\n'.join(self.misc_files)
-                      }
-        for ext in self.generators:
-            components[ext] = '\n'.join(map(str, self.generators[ext]))
-        for name, c_str in sorted(components.items()):
-            if len(c_str) == 0:
-                continue
-            s += '  {}\n'.format(name)
-            for line in c_str.split('\n'):
-                s += '    ' + line + '\n'
-        return s

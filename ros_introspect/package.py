@@ -68,6 +68,11 @@ class Package:
         self.components_by_type[type(package_file)].append(package_file)
         self.components_by_name[package_file.rel_fn].append(package_file)
 
+    def save(self):
+        for components in self.components_by_type.values():
+            for component in components:
+                component.save()
+
     def __repr__(self):
         s = '== {} ==\n'.format(self.root.name)
         for subtype in PackageFile.SUBTYPES + [PackageFile]:
