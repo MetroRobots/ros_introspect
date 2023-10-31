@@ -16,8 +16,6 @@ def get_filetype_by_contents(filename, ext):
             return
         if is_python_hashbang_line(first_line):
             return 'source'
-        elif '<launch' in first_line:
-            return 'launch'
         elif ext == '.xml' and ('<library' in first_line or '<class_libraries' in first_line):
             return 'plugin_config'
 
@@ -37,10 +35,6 @@ def get_package_structure(pkg_root):
                 continue
             if fn in KEY:
                 structure['key'][rel_fn] = full
-            elif rel_fn.endswith('.launch.py'):
-                structure['launchpy'][rel_fn] = full
-            elif ext == '.launch':
-                structure['launch'][rel_fn] = full
             elif ext in SRC_EXTS:
                 structure['source'][rel_fn] = full
             elif ext == '.cfg' and 'cfg/' in full:

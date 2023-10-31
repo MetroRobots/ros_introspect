@@ -1,32 +1,40 @@
+from ..package import PackageFile, package_file, DependencyType
 import re
-from xml.dom.minidom import parse
+from xml.dom.minidom import parseString as parse_xml
 from xml.parsers.expat import ExpatError
 
 
-class Launch:
-    def __init__(self, rel_fn, file_path):
-        self.rel_fn = rel_fn
-        self.file_path = file_path
+class Launch(PackageFile):
+    def get_dependencies(self, dependency_type):
+        deps = set()
+        if dependency_type != DependencyType.RUN:
+            return deps
 
-    def get_dependencies(self):
-        d = set()
-        d.update(self.get_node_pkgs())
-        d.update(self.get_include_pkgs())
-        d.update(self.get_misc_pkgs())
-        return sorted(d)
-
-    def __repr__(self):
-        return self.rel_fn
+        deps.update(self.get_node_pkgs())
+        deps.update(self.get_include_pkgs())
+        deps.update(self.get_misc_pkgs())
+        return deps
 
 
+@package_file
 class LaunchXML(Launch):
-    def __init__(self, rel_fn, file_path):
-        Launch.__init__(self, rel_fn, file_path)
+    def __init__(self, full_path, package_root):
+        super().__init__(full_path, package_root)
         try:
-            self.tree = parse(self.file_path)
-            self.test = len(self.tree.getElementsByTagName('test')) > 0
+            self.tree = parse_xml(full_path)
+            self.is_test = len(self.tree.getElementsByTagName('test')) > 0
         except ExpatError:  # this is an invalid xml file
-            self.test = False
+            self.is_test = False
+
+    @classmethod
+    def is_type(cls, path):
+        if path.suffix == '.launch':
+            return True
+        if path.suffix != '.xml':
+            return False
+        with open(path) as f:
+            line = f.readline()
+            return '<launch' in line
 
     def get_node_pkgs(self):
         s = set()
@@ -64,6 +72,12 @@ class LaunchPy(Launch):
         Launch.__init__(self, rel_fn, file_path)
         self.test = False
         self.contents = open(file_path).read()
+
+    @classmethod
+    def is_type(cls, path):
+        path_s = str(path)
+        if path_s.endswith('.launch.py'):
+            return True
 
     def get_node_pkgs(self):
         s = set()
