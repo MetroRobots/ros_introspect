@@ -1,6 +1,5 @@
 from .cmake_parser import parse_file
 from .package_structure import get_package_structure
-from .plugin_xml import PluginXML
 from .source_code import SourceCode
 
 
@@ -12,10 +11,6 @@ class Package:
         self.source_code = SourceCode(package_structure['source'], self.name)
         if self.cmake:
             self.source_code.setup_tags(self.cmake)
-
-        self.plugin_configs = []
-        for rel_fn, file_path in package_structure['plugin_config'].items():
-            self.plugin_configs.append(PluginXML(rel_fn, file_path, self.ros_version == 1))
 
         self.dynamic_reconfigs = package_structure['cfg'].keys()
         self.misc_files = list(package_structure[None].keys()) + list(package_structure['models'].keys())

@@ -1,25 +1,30 @@
-import os.path
+from ..package import PackageFile, package_file
 from collections import OrderedDict
-from xml.dom.minidom import parse
+from xml.dom.minidom import parse as parse_xml_file
+from xml.parsers.expat import ExpatError
 
 NS_PATTERN = '%s::%s'
 
 
-class PluginXML:
-    def __init__(self, rel_fn, file_path, library_prefix=True):
-        self.rel_fn = rel_fn
-        self.file_path = file_path
-        self.library_prefix = library_prefix
+@package_file
+class PluginXML(PackageFile):
+
+    def __init__(self, full_path, package):
+        super().__init__(full_path, package)
+
+        self.library_prefix = (package.ros_version == 1)
         self.has_class_libraries_tag = False
         self.libraries = OrderedDict()
         self.parent_pkgs = set()
-        self.changed = False
 
-        if os.path.exists(self.file_path):
+        if self.full_path.exists():
             self.read()
 
     def read(self):
-        tree = parse(self.file_path)
+        try:
+            tree = parse_xml_file(open(self.full_path))
+        except ExpatError:
+            return
 
         self.has_class_libraries_tag = len(tree.getElementsByTagName('class_libraries')) > 0
 
@@ -46,6 +51,14 @@ class PluginXML:
 
                 cls[d['type']] = d
 
+    @classmethod
+    def is_type(cls, path):
+        if path.suffix != '.xml':
+            return False
+        with open(path) as f:
+            line = f.readline()
+            return '<library' in line or '<class_libraries' in line
+
     def contains_library(self, library_name, pkg, name):
         if library_name not in self.libraries and self.library_prefix:
             library_name = f'lib{library_name}'
@@ -64,10 +77,8 @@ class PluginXML:
                               'description': description}
         self.changed = True
 
-    def write(self):
-        if not self.changed:
-            return
-        with open(self.file_path, 'w') as f:
+    def write(self, output_path):
+        with open(output_path, 'w') as f:
             f.write(str(self))
 
     def __repr__(self):

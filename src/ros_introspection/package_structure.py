@@ -16,8 +16,6 @@ def get_filetype_by_contents(filename, ext):
             return
         if is_python_hashbang_line(first_line):
             return 'source'
-        elif ext == '.xml' and ('<library' in first_line or '<class_libraries' in first_line):
-            return 'plugin_config'
 
 
 def get_package_structure(pkg_root):
@@ -39,8 +37,6 @@ def get_package_structure(pkg_root):
                 structure['source'][rel_fn] = full
             elif ext == '.cfg' and 'cfg/' in full:
                 structure['cfg'][rel_fn] = full
-            elif ext in ['.urdf', '.xacro']:
-                structure['urdf'][rel_fn] = full
             else:
                 structure[get_filetype_by_contents(full, ext)][rel_fn] = full
     return structure
