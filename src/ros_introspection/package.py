@@ -1,9 +1,7 @@
 from .cmake_parser import parse_file
 from .package_structure import get_package_structure
 from .plugin_xml import PluginXML
-from .rviz_config import RVizConfig
 from .source_code import SourceCode
-from .urdf import UrdfFile
 
 
 class Package:
@@ -16,21 +14,10 @@ class Package:
             self.source_code.setup_tags(self.cmake)
 
         self.plugin_configs = []
-        self.urdf_files = []
         for rel_fn, file_path in package_structure['plugin_config'].items():
             self.plugin_configs.append(PluginXML(rel_fn, file_path, self.ros_version == 1))
-        for rel_fn, file_path in package_structure['urdf'].items():
-            self.urdf_files.append(UrdfFile(rel_fn, file_path))
 
         self.dynamic_reconfigs = package_structure['cfg'].keys()
-        self.urdf_files = []
-        for rel_fn, path in package_structure['urdf'].items():
-            self.urdf_files.append(UrdfFile(rel_fn, path))
-        self.rviz_configs = []
-
-        for rel_fn, path in package_structure[None].items():
-            if path.endswith('.rviz'):
-                self.rviz_configs.append(RVizConfig(rel_fn, path))
         self.misc_files = list(package_structure[None].keys()) + list(package_structure['models'].keys())
 
     def is_metapackage(self):

@@ -1,3 +1,4 @@
+from ..package import PackageFile, package_file, DependencyType
 import yaml
 import ruamel.yaml  # For custom yaml dumping
 
@@ -40,25 +41,28 @@ def dictionary_subtract(alpha, beta):
     return changed
 
 
-class RVizConfig:
-    def __init__(self, rel_fn, path):
-        self.rel_fn = rel_fn
-        self.path = path
-        self.contents = yaml.safe_load(open(path))
-        self.changed = False
+@package_file
+class RVizConfig(PackageFile):
+    def __init__(self, full_path, package):
+        super().__init__(full_path, package)
+        self.contents = yaml.safe_load(open(full_path))
+
+    @classmethod
+    def is_type(cls, path):
+        return path.suffix == '.rviz'
 
     def get_class_dicts(self):
         return get_class_dicts(self.contents)
 
-    def get_dependencies(self):
-        packages = set()
+    def get_dependencies(self, dependency_type):
+        deps = set()
+        if dependency_type != DependencyType.RUN:
+            return deps
         for config in self.get_class_dicts():
             value = config['Class'].split('/')[0]
-            packages.add(value)
-        return packages
+            deps.add(value)
+        return deps
 
-    def write(self):
-        if not self.changed:
-            return
-        with open(self.path, 'w') as f:
+    def write(self, output_path):
+        with open(output_path, 'w') as f:
             my_yaml_writer.dump(self.contents, f, transform=lambda s: s.replace(": ''\n", ': ""\n'))

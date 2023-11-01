@@ -200,7 +200,6 @@ class SetupPy(SingularPackageFile):
                 self.args['name'] = 'package_name'
             return
 
-        self.changed = False
         self.hash_bang = (original_contents[0] == '#')
         self.imports = []
         self.declare_package_name = False

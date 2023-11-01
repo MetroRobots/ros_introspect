@@ -1,6 +1,5 @@
 from ..package import SingularPackageFile, package_file
 import configparser
-import os
 
 
 @package_file
@@ -9,8 +8,7 @@ class SetupCFG(SingularPackageFile):
         super().__init__(full_path, package)
 
         self.config = configparser.ConfigParser()
-        if os.path.exists(self.full_path):
-            self.changed = False
+        if self.full_path.exists():
             self.config.read(self.full_path)
         else:
             self.changed = True
