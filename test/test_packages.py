@@ -99,9 +99,8 @@ def test_all_components():
     pkg = Package(folder)
     for subtype in PackageFile.SUBTYPES:
         # Make sure there are no errors raised
-        print(subtype)
+        print(subtype.category_name())
         assert subtype.is_type(THIS_FILE) is not None
-        subtype.category_name()
         with tempfile.NamedTemporaryFile(mode='w', prefix=str(folder) + '/') as temp:
             p = pathlib.Path(temp.name)
             st = subtype(p, pkg)

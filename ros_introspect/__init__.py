@@ -7,5 +7,9 @@ from .components.setup_py import SetupPy
 from .components.setup_cfg import SetupCFG
 from .components.rviz_config import RVizConfig
 from .components.urdf import UrdfFile
-__all__ = ['find_packages', 'Package', 'PackageXML', 'ROSMsg', 'ROSSrv',
-           'ROSAction', 'PluginXML', 'LaunchXML', 'LaunchPy', 'SetupPy', 'SetupCFG', 'RVizConfig', 'UrdfFile']
+
+# NB: Source code goes last to ensure that setup.py and launch.py are handled first
+from .components.source_code import SourceCode
+
+__all__ = ['find_packages', 'Package', 'PackageXML', 'ROSMsg', 'ROSSrv', 'ROSAction', 'PluginXML',
+           'LaunchXML', 'LaunchPy', 'SetupPy', 'SetupCFG', 'RVizConfig', 'UrdfFile', 'SourceCode']

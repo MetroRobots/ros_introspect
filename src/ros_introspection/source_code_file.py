@@ -1,4 +1,3 @@
-import os
 import re
 
 from .resource_list import get_python_dependency, is_package
@@ -9,53 +8,11 @@ PYTHON2 = 'from ' + PKG + ' import .*'
 CPLUS = re.compile(r'#include\s*[<\\"]([^/]*)/?([^/]*)[>\\"]')          # Zero or one slash
 CPLUS2 = re.compile(r'#include\s*[<\\"]([^/]*)/([^/]*)/([^/]*)[>\\"]')  # Two slashes
 ROSCPP = re.compile(r'#include\s*<ros/ros.h>')
-INIT_PY = '__init__.py'
 
 EXPRESSIONS = [re.compile(PYTHON1), re.compile(PYTHON2), CPLUS, CPLUS2]
 
-PYTHON_TAGS = {
-    'std_main': re.compile(r"if\s*__name__\s*==\s*'__main__'"),
-    'entry_pt': re.compile(r'(def main\()'),
-}
-
-
-def is_python_hashbang_line(s):
-    return s[0:2] == '#!' and 'python' in s
-
 
 class SourceCodeFile:
-    def __init__(self, rel_fn, file_path):
-        self.rel_fn = rel_fn
-        self.file_path = file_path
-        self.tags = set()
-        self.changed_contents = None
-
-        self.lines = list(map(str.strip, self.get_contents().split('\n')))
-        if '.py' in self.file_path or (len(self.lines) > 0 and is_python_hashbang_line(self.lines[0])):
-            self.language = 'python'
-        else:
-            self.language = 'c++'
-
-        # Add tags
-        parts = os.path.split(rel_fn)
-        if parts and parts[0] == 'test':
-            self.tags.add('test')
-
-        if self.language == 'python':
-            lib_file = os.path.join(os.path.dirname(self.file_path), INIT_PY)
-            if os.path.exists(lib_file):
-                self.tags.add('pylib')
-            elif self.is_executable():
-                self.tags.add('pyscript')
-            for tag, pattern in PYTHON_TAGS.items():
-                if self.search_lines_for_pattern(pattern):
-                    self.tags.add(tag)
-
-    def get_contents(self):
-        if self.changed_contents:
-            return self.changed_contents
-        return open(self.file_path).read()
-
     def replace_contents(self, contents):
         self.changed_contents = contents
         try:
@@ -138,17 +95,5 @@ class SourceCodeFile:
                 deps.append(p_dep)
         return deps
 
-    def is_executable(self):
-        return os.access(self.file_path, os.X_OK)
-
     def __lt__(self, other):
         return self.rel_fn < other.rel_fn
-
-    def __repr__(self):
-        attribs = [self.language] + list(self.tags)
-        return '%s (%s)' % (self.rel_fn, ', '.join(attribs))
-
-    def write(self):
-        if self.changed_contents:
-            with open(self.file_path, 'w') as f:
-                f.write(self.changed_contents)

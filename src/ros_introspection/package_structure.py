@@ -1,21 +1,9 @@
 import collections
 import os
 
-from .source_code_file import is_python_hashbang_line
 from ros_introspect.finder import is_repo_marker
 
-KEY = ['package.xml', 'CMakeLists.txt']
-SRC_EXTS = ['.py', '.cpp', '.h', '.hpp', '.c', '.cc']
-
-
-def get_filetype_by_contents(filename, ext):
-    with open(filename) as f:
-        try:
-            first_line = f.readline()
-        except UnicodeDecodeError:
-            return
-        if is_python_hashbang_line(first_line):
-            return 'source'
+KEY = ['CMakeLists.txt']
 
 
 def get_package_structure(pkg_root):
@@ -33,10 +21,7 @@ def get_package_structure(pkg_root):
                 continue
             if fn in KEY:
                 structure['key'][rel_fn] = full
-            elif ext in SRC_EXTS:
-                structure['source'][rel_fn] = full
             elif ext == '.cfg' and 'cfg/' in full:
                 structure['cfg'][rel_fn] = full
-            else:
-                structure[get_filetype_by_contents(full, ext)][rel_fn] = full
+
     return structure
