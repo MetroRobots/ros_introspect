@@ -1,5 +1,6 @@
 from ..package import SingularPackageFile, package_file
 from xml.dom.minidom import parseString as parse_xml
+from xml.parsers.expat import ExpatError
 import re
 import collections
 import operator
@@ -45,15 +46,16 @@ def count_trailing_spaces(s):
 @package_file
 class PackageXML(SingularPackageFile):
 
-    def __init__(self, full_path, package_root):
-        super().__init__(full_path, package_root)
+    def __init__(self, full_path, package):
+        super().__init__(full_path, package)
         contents = open(full_path).read()
-        self.tree = parse_xml(contents)
-        package_tags = self.tree.getElementsByTagName('package')
-        if not package_tags:
+        try:
+            self.tree = parse_xml(contents)
+            self.root = self.tree.getElementsByTagName('package')[0]
+        except (ExpatError, IndexError):
             self.tree = parse_xml('<package />')
             package_tags = self.tree.getElementsByTagName('package')
-        self.root = package_tags[0]
+            self.root = package_tags[0]
 
         self.header = contents[:get_package_tag_index(contents)]
 

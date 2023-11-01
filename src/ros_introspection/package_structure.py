@@ -4,7 +4,7 @@ import os
 from .source_code_file import is_python_hashbang_line
 from ros_introspect.finder import is_repo_marker
 
-KEY = ['package.xml', 'CMakeLists.txt', 'setup.py']
+KEY = ['package.xml', 'CMakeLists.txt']
 SRC_EXTS = ['.py', '.cpp', '.h', '.hpp', '.c', '.cc']
 
 

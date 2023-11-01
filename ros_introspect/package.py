@@ -8,10 +8,10 @@ DependencyType = IntEnum('DependencyType', ['BUILD', 'RUN', 'TEST'])
 class PackageFile:
     SUBTYPES = []
 
-    def __init__(self, full_path, package_root):
+    def __init__(self, full_path, package):
         self.full_path = full_path
-        self.package_root = package_root
-        self.rel_fn = full_path.relative_to(package_root)
+        self.package = package
+        self.rel_fn = full_path.relative_to(package.root)
         self.changed = False
 
     @classmethod
@@ -24,7 +24,7 @@ class PackageFile:
 
     @classmethod
     def category_name(cls):
-        raise NotImplementedError
+        return cls.__name__
 
     def get_dependencies(self, dependency_type):
         return set()
@@ -62,11 +62,11 @@ def package_file(cls):
     PackageFile.SUBTYPES.append(cls)
 
 
-def infer_package_file(path, package_root):
+def infer_package_file(path, package):
     for subtype in PackageFile.SUBTYPES:
         if subtype.is_type(path):
-            return subtype(path, package_root)
-    return MiscPackageFile(path, package_root)
+            return subtype(path, package)
+    return MiscPackageFile(path, package)
 
 
 class Package:
@@ -83,12 +83,19 @@ class Package:
                 if subpath.is_dir():
                     queue.append(subpath)
                 else:
-                    self.add_file(infer_package_file(subpath, self.root))
+                    self.add_file(infer_package_file(subpath, self))
 
         # Get Key Properties from Manifest
         assert self.package_xml
         self.name = self.package_xml.name
         self.build_type = self.package_xml.build_type
+
+    @property
+    def ros_version(self):
+        if self.build_type == 'catkin':
+            return 1
+        else:
+            return 2
 
     def add_file(self, package_file):
         subtype = type(package_file)
@@ -108,6 +115,8 @@ class Package:
         deps = set()
         for component in self:
             deps |= component.get_dependencies(dependency_type)
+        if self.name in deps:
+            deps.remove(self.name)
         return deps
 
     def save(self):

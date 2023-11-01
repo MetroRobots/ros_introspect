@@ -1,6 +1,6 @@
+from ..package import SingularPackageFile, package_file
 import ast
 import collections
-import os
 import pathlib
 import re
 import sys
@@ -151,7 +151,8 @@ def contains_quoted_string(container, s):
             return quoted_value
 
 
-class SetupPy:
+@package_file
+class SetupPy(SingularPackageFile):
     """
     Representation of a setup.py file, covering a large range of different styles
 
@@ -171,21 +172,25 @@ class SetupPy:
                                 The values are more complex.
     """
 
-    def __init__(self, pkg_name, file_path, ros2=False):
-        self.pkg_name = pkg_name
-        self.file_path = file_path
+    def __init__(self, full_path, package):
+        super().__init__(full_path, package)
 
         self.args = collections.OrderedDict()
 
-        if not os.path.exists(self.file_path):
+        if self.full_path.exists():
+            original_contents = open(full_path, 'r').read()
+        else:
+            original_contents = ''
+
+        if not original_contents:
             self.changed = True
             self.hash_bang = True
-            if not ros2:
+            if package.ros_version == 1:
                 self.imports = [('distutils.core', 'setup'), ('catkin_pkg.python_setup', 'generate_distutils_setup')]
                 self.declare_package_name = False
                 self.helper_function = 'catkin_pkg.python_setup'
                 self.helper_variable = 'package_info'
-                self.args['packages'] = [quote_string(pkg_name)]
+                self.args['packages'] = [quote_string(self.package.name)]
                 self.args['package_dir'] = {quote_string(''): quote_string('src')}
             else:
                 self.imports = [('setuptools', 'setup')]
@@ -195,7 +200,6 @@ class SetupPy:
                 self.args['name'] = 'package_name'
             return
 
-        original_contents = open(file_path, 'r').read()
         self.changed = False
         self.hash_bang = (original_contents[0] == '#')
         self.imports = []
@@ -254,7 +258,7 @@ class SetupPy:
         if self.declare_package_name:
             base_folder = "'share/' + package_name"
         else:
-            base_folder = f"'share/{self.pkg_name}'"
+            base_folder = f"'share/{self.package.name}'"
 
         if rel_fn is None:
             return base_folder
@@ -282,7 +286,7 @@ class SetupPy:
                 if m:
                     glob_pattern = m.group(1)
                     existing_files = []
-                    root = pathlib.Path(self.file_path).parent
+                    root = self.full_path.parent
                     for subpath in root.glob(glob_pattern):
                         existing_files.append(quote_string(str(subpath).replace(str(root) + '/', '')))
 
@@ -290,7 +294,7 @@ class SetupPy:
                 raise RuntimeError('Trouble understanding the install data_files bit of the setup.py')
 
         if folder == 'resource' and self.declare_package_name and "'resource/' + package_name" in existing_files:
-            paths.remove(self.pkg_name)
+            paths.remove(self.package.name)
 
         for fn in paths:
             if folder:
@@ -309,10 +313,8 @@ class SetupPy:
             if import_item not in self.imports:
                 self.imports.append(import_item)
 
-    def write(self):
-        if not self.changed:
-            return
-        with open(self.file_path, 'w') as f:
+    def write(self, output_path):
+        with open(output_path, 'w') as f:
             f.write(str(self))
 
     def __repr__(self):
@@ -329,7 +331,7 @@ class SetupPy:
         s += '\n'
 
         if self.declare_package_name:
-            s += "package_name = '{}'\n\n".format(self.pkg_name)
+            s += "package_name = '{}'\n\n".format(self.package.name)
 
         if self.helper_function:
             function_name = HELPER_FUNCTIONS[self.helper_function]
@@ -354,7 +356,7 @@ class SetupPy:
 def create_setup_py(package):
     if package.setup_py:
         return
-    package.setup_py = SetupPy(package.name, os.path.join(package.root, 'setup.py'), package.ros_version == 2)
+    package.setup_py = SetupPy(package.root / 'setup.py', package)
 
 
 if __name__ == '__main__':

@@ -1,14 +1,17 @@
+from ..package import SingularPackageFile, package_file
 import configparser
 import os
 
 
-class SetupCFG:
-    def __init__(self, file_path):
-        self.file_path = file_path
+@package_file
+class SetupCFG(SingularPackageFile):
+    def __init__(self, full_path, package):
+        super().__init__(full_path, package)
+
         self.config = configparser.ConfigParser()
-        if os.path.exists(self.file_path):
+        if os.path.exists(self.full_path):
             self.changed = False
-            self.config.read(self.file_path)
+            self.config.read(self.full_path)
         else:
             self.changed = True
 
@@ -21,8 +24,6 @@ class SetupCFG:
             self.config.set(section_name, key, value)
             self.changed = True
 
-    def write(self):
-        if not self.changed:
-            return
-        with open(self.file_path, 'w') as f:
+    def write(self, output_path):
+        with open(output_path, 'w') as f:
             self.config.write(f, space_around_delimiters=False)

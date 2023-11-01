@@ -1,13 +1,16 @@
 from ros_introspect import find_packages, Package
 from ros_introspect.package import PackageFile
-from test_finder import TEST_DATA_FOLDER
+from test_finder import TEST_DATA_FOLDER, THIS_FILE
 import pytest
+import pathlib
 import tempfile
 
 
 def test_find_packages():
     pkgs = list(find_packages(TEST_DATA_FOLDER))
     assert len(pkgs) == 4
+    for pkg in pkgs:
+        print(pkg)
 
 
 def test_waymond():
@@ -84,9 +87,22 @@ class FakeComponent(PackageFile):
 def test_bad_component():
     with pytest.raises(NotImplementedError):
         FakeComponent.is_type('')
-    with pytest.raises(NotImplementedError):
-        FakeComponent.category_name()
+    assert FakeComponent.category_name() == 'FakeComponent'
 
     fc = FakeComponent(TEST_DATA_FOLDER / 'jobu' / 'kpop', TEST_DATA_FOLDER)
     with pytest.raises(NotImplementedError):
         fc.write('')
+
+
+def test_all_components():
+    folder = TEST_DATA_FOLDER / 'waymond'
+    pkg = Package(folder)
+    for subtype in PackageFile.SUBTYPES:
+        # Make sure there are no errors raised
+        print(subtype)
+        assert subtype.is_type(THIS_FILE) is not None
+        subtype.category_name()
+        with tempfile.NamedTemporaryFile(mode='w', prefix=str(folder) + '/') as temp:
+            p = pathlib.Path(temp.name)
+            st = subtype(p, pkg)
+            st.write(temp.name)

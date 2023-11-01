@@ -1,14 +1,18 @@
 from ..package import PackageFile, package_file, DependencyType
 import re
-from xml.dom.minidom import parseString as parse_xml
+from xml.dom.minidom import parse as parse_xml_file, parseString as parse_xml
 from xml.parsers.expat import ExpatError
 
 
 class Launch(PackageFile):
     def get_dependencies(self, dependency_type):
         deps = set()
-        if dependency_type != DependencyType.RUN:
-            return deps
+        if self.is_test:
+            if dependency_type != DependencyType.TEST:
+                return deps
+        else:
+            if dependency_type != DependencyType.RUN:
+                return deps
 
         deps.update(self.get_node_pkgs())
         deps.update(self.get_include_pkgs())
@@ -18,12 +22,17 @@ class Launch(PackageFile):
 
 @package_file
 class LaunchXML(Launch):
-    def __init__(self, full_path, package_root):
-        super().__init__(full_path, package_root)
+    def __init__(self, full_path, package):
+        super().__init__(full_path, package)
+        if not full_path.exists():
+            self.tree = parse_xml('<launch />')
+            self.is_test = False
+            return
         try:
-            self.tree = parse_xml(full_path)
+            self.tree = parse_xml_file(open(full_path))
             self.is_test = len(self.tree.getElementsByTagName('test')) > 0
         except ExpatError:  # this is an invalid xml file
+            self.tree = parse_xml('<launch />')
             self.is_test = False
 
     @classmethod
@@ -62,22 +71,27 @@ class LaunchXML(Launch):
             s.add(x.group(1))
         return s
 
+    def write(self, output_path):
+        s = self.tree.toxml(self.tree.encoding)
+        with open(output_path, 'wb') as f:
+            f.write(s.encode('UTF-8'))
+
 
 PY_NODE_PATTERN = re.compile(r'package=["\']([\w_]+)["\']')
 PY_SHARE_PATTERN = re.compile(r'get_package_share_(path|directory)\(\s*["\']([\w_]+)["\']')
 
 
+@package_file
 class LaunchPy(Launch):
-    def __init__(self, rel_fn, file_path):
-        Launch.__init__(self, rel_fn, file_path)
-        self.test = False
-        self.contents = open(file_path).read()
+    def __init__(self, full_path, package):
+        super().__init__(full_path, package)
+        self.is_test = False
+        self.contents = open(full_path).read()
 
     @classmethod
     def is_type(cls, path):
         path_s = str(path)
-        if path_s.endswith('.launch.py'):
-            return True
+        return path_s.endswith('.launch.py')
 
     def get_node_pkgs(self):
         s = set()
@@ -95,3 +109,7 @@ class LaunchPy(Launch):
 
     def get_misc_pkgs(self):
         return set()
+
+    def write(self, output_path):
+        with open(output_path, 'w') as f:
+            f.write(self.contents)

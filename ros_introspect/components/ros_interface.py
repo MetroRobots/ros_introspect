@@ -57,8 +57,8 @@ class InterfaceSection:
 
 
 class ROSInterface(PackageFile):
-    def __init__(self, full_path, package_root):
-        super().__init__(full_path, package_root)
+    def __init__(self, full_path, package):
+        super().__init__(full_path, package)
 
         self.type = full_path.suffix[1:]  # Just the extension, no dot
         self.name = full_path.stem
