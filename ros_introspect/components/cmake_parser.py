@@ -2,7 +2,7 @@ import os.path
 import re
 import sys
 
-from .cmake import CMake, Command, CommandGroup, Section, SectionStyle
+from .cmake import CMakeSection, Command, CommandGroup, Section, SectionStyle
 
 ALL_CAPS = re.compile('^[A-Z_]+$')
 ALL_WHITESPACE = ['whitespace', 'newline']
@@ -49,7 +49,7 @@ def match_command_groups(contents, base_depth=0):
                     depth -= 1
                     if depth == base_depth:
                         recursive_contents = match_command_groups(current, base_depth + 1)
-                        sub = CMake(initial_contents=recursive_contents, depth=base_depth + 1)
+                        sub = CMakeSection(initial_contents=recursive_contents, depth=base_depth + 1)
                         cg = CommandGroup(group, sub, content)
                         revised_contents.append(cg)
                         group = None
@@ -220,4 +220,4 @@ def parse_file(filename):
         return
     with open(filename) as f:
         s = f.read()
-        return CMake(file_path=filename, initial_contents=parse_commands(s))
+        return CMakeSection(file_path=filename, initial_contents=parse_commands(s))

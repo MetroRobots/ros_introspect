@@ -1,11 +1,8 @@
-from .cmake_parser import parse_file
 from .package_structure import get_package_structure
 
 
 class Package:
     def __init__(self, root):
-        self.cmake = parse_file(self.root + '/CMakeLists.txt')
-
         package_structure = get_package_structure(root)
         if self.cmake:
             self.source_code.setup_tags(self.cmake)
