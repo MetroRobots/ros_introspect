@@ -1,5 +1,5 @@
 import collections
-from .finder import find_package_roots
+from .finder import find_package_roots, is_repo_marker
 from enum import IntEnum
 
 DependencyType = IntEnum('DependencyType', ['BUILD', 'RUN', 'TEST'])
@@ -81,8 +81,14 @@ class Package:
             folder = queue.pop(0)
             for subpath in folder.iterdir():
                 if subpath.is_dir():
+                    # Folder
+                    if is_repo_marker(subpath):
+                        continue
                     queue.append(subpath)
                 else:
+                    # File
+                    if subpath.suffix == '.pyc' or subpath.suffix.endswith('~'):
+                        continue
                     self.add_file(infer_package_file(subpath, self))
 
         # Get Key Properties from Manifest
