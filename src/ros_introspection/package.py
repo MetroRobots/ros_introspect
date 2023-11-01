@@ -10,7 +10,6 @@ class Package:
         if self.cmake:
             self.source_code.setup_tags(self.cmake)
 
-        self.dynamic_reconfigs = package_structure['cfg'].keys()
         self.misc_files = list(package_structure[None].keys()) + list(package_structure['models'].keys())
 
     def is_metapackage(self):

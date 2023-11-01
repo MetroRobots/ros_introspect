@@ -13,7 +13,6 @@ def get_package_structure(pkg_root):
         if is_repo_marker(root):
             continue
         for fn in files:
-            ext = os.path.splitext(fn)[-1]
             full = '%s/%s' % (root, fn)
             rel_fn = full.replace(pkg_root + '/', '')
 
@@ -21,7 +20,5 @@ def get_package_structure(pkg_root):
                 continue
             if fn in KEY:
                 structure['key'][rel_fn] = full
-            elif ext == '.cfg' and 'cfg/' in full:
-                structure['cfg'][rel_fn] = full
 
     return structure
