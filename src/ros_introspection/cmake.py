@@ -166,37 +166,6 @@ class CMake:
                 return i_index
         return len(self.contents)
 
-    def add_command(self, cmd):
-        i_index = self.get_insertion_index(cmd)
-        sub_contents = []
-        if i_index > 0 and not isinstance(self.contents[i_index - 1], str):
-            sub_contents.append('\n')
-        if self.depth > 0:
-            sub_contents.append('  ' * self.depth)
-            sub_contents.append(cmd)
-            sub_contents.append('\n')
-        else:
-            sub_contents.append(cmd)
-        if i_index == len(self.contents):
-            sub_contents.append('\n')
-
-        self.contents = self.contents[:i_index] + sub_contents + self.contents[i_index:]
-
-        if cmd.__class__ == Command:
-            self.content_map[cmd.command_name].append(cmd)
-        elif cmd.__class__ == CommandGroup:
-            self.content_map['group'].append(cmd)
-
-    def remove_command(self, cmd):
-        print('\tRemoving %s' % str(cmd).replace('\n', ' ').replace('  ', ''))
-        self.contents.remove(cmd)
-        self.content_map[cmd.command_name].remove(cmd)
-
-    def remove_all_commands(self, cmd_name):
-        cmds = list(self.content_map[cmd_name])
-        for cmd in cmds:
-            self.remove_command(cmd)
-
     def is_metapackage(self):
         return len(self.content_map['catkin_metapackage']) > 0
 
@@ -300,42 +269,6 @@ class CMake:
                 return cmd, s
         return self.content_map[command_name][0], None
 
-    def ensure_section_values(self, cmd, section, items, alpha_order=True, ignore_quoting=False):
-        """Ensure the CMake command with the given section has all of the values in items."""
-        existing = self.resolve_variables(section.values)
-        needed_items = []
-        for item in items:
-            if item in existing or item in section.values:
-                continue
-
-            if ignore_quoting:
-                quoted = f'"{item}"'
-                if quoted in existing or quoted in section.values:
-                    continue
-
-            # TODO: Should maybe follow quote style
-            needed_items.append(item)
-
-        if needed_items:
-            section.add_values(needed_items, alpha_order)
-            cmd.changed = True
-
-    def section_check(self, items, cmd_name, section_name='', zero_okay=False, alpha_order=True, ignore_quoting=False):
-        """Ensure there's a CMake command of the given type with the given section name and items."""
-        if len(items) == 0 and not zero_okay:
-            return
-
-        cmd, section = self.get_command_section(cmd_name, section_name)
-
-        if cmd is None:
-            cmd = Command(cmd_name)
-            self.add_command(cmd)
-
-        if section is None:
-            cmd.add_section(section_name, sorted(items))
-        else:
-            self.ensure_section_values(cmd, section, items, alpha_order, ignore_quoting)
-
     def get_clusters(self, desired_style):
         """Return a list of clusters where each cluster is an array of strings with a Command/CommandGroup at the end.
 
@@ -394,9 +327,6 @@ class CMake:
             if version < new_version:
                 section.values[0] = '.'.join(map(str, new_version))
                 cmd.changed = True
-
-    def __repr__(self):
-        return ''.join(map(str, self.contents))
 
     def write(self, fn=None):
         if fn is None:

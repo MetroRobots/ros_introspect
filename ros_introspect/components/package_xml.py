@@ -104,6 +104,9 @@ class PackageXML(SingularPackageFile):
         if tab_ct:
             return max(tab_ct.items(), key=operator.itemgetter(1))[0]
 
+    def create_new_tab_element(self, tabs=1):
+        return self.tree.createTextNode('\n' + ' ' * (self.std_tab * tabs))
+
     def get_elements_by_tags(self, tags):
         elements = []
         for tag in tags:
@@ -141,6 +144,27 @@ class PackageXML(SingularPackageFile):
                     if child.nodeName == 'metapackage':
                         return True
         return False
+
+    def insert_new_tag(self, tag, index):
+        before = self.root.childNodes[:index + 1]
+        after = self.root.childNodes[index + 1:]
+
+        new_tab_element = self.create_new_tab_element()
+
+        # if the tag immediately before where we're going to insert is a text node,
+        # then insert the new element and then the tab
+        if before and before[-1].nodeType == before[-1].TEXT_NODE:
+            new_bits = [tag, new_tab_element]
+        else:
+            # Otherwise (i.e. most cases) insert the tab then the element
+            new_bits = [new_tab_element, tag]
+
+        self.root.childNodes = before + new_bits + after
+        self.changed = True
+
+    def insert_new_tags(self, tags):
+        for tag in tags:
+            self.insert_new_tag(tag)
 
     def write(self, output_path):
         s = self.tree.toxml(self.tree.encoding)

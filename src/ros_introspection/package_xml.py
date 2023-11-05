@@ -57,9 +57,6 @@ class PackageXML:
             pkgs += self.get_packages_by_tag(key)
         return set(pkgs)
 
-    def get_tab_element(self, tabs=1):
-        return self.tree.createTextNode('\n' + ' ' * (self.std_tab * tabs))
-
     def get_child_indexes(self):
         """Return a dictionary based on which children span which indexes.
 
@@ -149,40 +146,13 @@ class PackageXML:
             else:
                 return indexes[best_tag][-1][1]
 
-    def insert_new_tag(self, tag):
-        if tag.tagName in DEPEND_TAGS:
-            value = tag.firstChild.data
-        else:
-            value = None
-
-        index = self.get_insertion_index(tag.tagName, value)
-        before = self.root.childNodes[:index + 1]
-        after = self.root.childNodes[index + 1:]
-
-        new_tab_element = self.get_tab_element()
-
-        # if the tag immediately before where we're going to insert is a text node,
-        # then insert the new element and then the tab
-        if before and before[-1].nodeType == before[-1].TEXT_NODE:
-            new_bits = [tag, new_tab_element]
-        else:
-            # Otherwise (i.e. most cases) insert the tab then the element
-            new_bits = [new_tab_element, tag]
-
-        self.root.childNodes = before + new_bits + after
-        self.changed = True
-
-    def insert_new_tags(self, tags):
-        for tag in tags:
-            self.insert_new_tag(tag)
-
     def insert_new_tag_inside_another(self, parent, tag, depth=2):
         all_elements = []
-        all_elements.append(self.get_tab_element(depth))
+        all_elements.append(self.create_new_tab_element(depth))
         all_elements.append(tag)
 
         if len(parent.childNodes) == 0:
-            parent.childNodes = all_elements + [self.get_tab_element()]
+            parent.childNodes = all_elements + [self.create_new_tab_element()]
         else:
             parent.childNodes = parent.childNodes[:-1] + all_elements + parent.childNodes[-1:]
         self.changed = True
@@ -239,12 +209,10 @@ class PackageXML:
         parent.removeChild(element)
         self.changed = True
 
-    def remove_dependencies(self, name, pkgs, quiet=False):
+    def remove_dependencies(self, name, pkgs):
         for el in self.root.getElementsByTagName(name):
             pkg = el.childNodes[0].nodeValue
             if pkg in pkgs:
-                if not quiet:
-                    print('\tRemoving %s %s' % (name, pkg))
                 self.remove_element(el)
 
     def update_people(self, target_name, target_email=None, search_name=None, search_email=None):
@@ -255,7 +223,6 @@ class PackageXML:
                 el.childNodes[0].nodeValue = target_name
                 if target_email:
                     el.setAttribute('email', target_email)
-                print('\tReplacing %s %s/%s with %s/%s' % (el.nodeName, name, email, target_name, target_email))
                 self.changed = True
 
     def set_license(self, license_str):

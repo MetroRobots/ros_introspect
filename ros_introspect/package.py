@@ -1,4 +1,5 @@
 import collections
+import pathlib
 from .finder import find_package_roots, is_repo_marker
 from enum import IntEnum
 
@@ -25,6 +26,10 @@ class PackageFile:
     @classmethod
     def category_name(cls):
         return cls.__name__
+
+    @classmethod
+    def attribute_name(cls):
+        return cls.category_name().replace('.', '_').lower()
 
     def get_dependencies(self, dependency_type):
         return set()
@@ -75,6 +80,15 @@ class Package:
         self.components_by_type = collections.defaultdict(list)
         self.components_by_name = collections.defaultdict(list)
 
+        # Syntactic sugar to allow for direct attribute access
+        for subtype in PackageFile.SUBTYPES:
+            attr_name = subtype.attribute_name()
+            print(attr_name)
+            if subtype.is_singular():
+                setattr(self, attr_name, None)
+            else:
+                setattr(self, attr_name, self.components_by_type[subtype])
+
         # Walk all files
         queue = [root]
         while queue:
@@ -108,9 +122,9 @@ class Package:
         self.components_by_type[subtype].append(package_file)
         self.components_by_name[package_file.rel_fn].append(package_file)
 
-        attr_name = subtype.category_name().replace('.', '_')
         if subtype.is_singular():
-            assert not hasattr(self, attr_name)
+            attr_name = subtype.attribute_name()
+            assert getattr(self, attr_name) is None
             setattr(self, attr_name, package_file)
 
     def __iter__(self):
@@ -149,3 +163,9 @@ class Package:
 def find_packages(root_folder):
     for package_root in find_package_roots(root_folder):
         yield Package(package_root)
+
+
+def print_packages():
+    current_folder = pathlib.Path('.')
+    for package in find_packages(current_folder):
+        print(package)
