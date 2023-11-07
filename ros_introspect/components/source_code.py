@@ -1,4 +1,4 @@
-from ..package import PackageFile, package_file
+from ..package import PackageFile, DependencyType, package_file
 import os
 import re
 
@@ -9,6 +9,31 @@ INIT_PY = '__init__.py'
 PYTHON_TAGS = {
     'std_main': re.compile(r"if\s*__name__\s*==\s*'__main__'"),
     'entry_pt': re.compile(r'(def main\()'),
+}
+
+# Import/Include patterns
+_PYTHON_PKG_PATTERN = r'([^\.;]+)(\.?[^;]*)?'
+PYTHON_IMPORT0 = re.compile(r'^import ' + _PYTHON_PKG_PATTERN)
+PYTHON_IMPORT1 = re.compile('from ' + _PYTHON_PKG_PATTERN + ' import .*')
+
+_NOT_A_SLASH = r'([^/]*)'
+_CPP_INITIAL_INCLUDE = r'#include\s*[<\\"]'
+_CPP_END_INCLUDE = r'[>\\"]'
+# Zero slashes
+CPP_INCLUDE0 = re.compile(_CPP_INITIAL_INCLUDE + _NOT_A_SLASH + _CPP_END_INCLUDE)  # Zero slashes
+# One slash
+CPP_INCLUDE1 = re.compile(_CPP_INITIAL_INCLUDE + _NOT_A_SLASH + '/' + _NOT_A_SLASH + _CPP_END_INCLUDE)
+# Two slashes
+CPP_INCLUDE2 = re.compile(_CPP_INITIAL_INCLUDE + _NOT_A_SLASH + '/' +
+                          _NOT_A_SLASH + '/' + _NOT_A_SLASH + _CPP_END_INCLUDE)
+
+IMPORT_PATTERNS = {
+    'python': [PYTHON_IMPORT0, PYTHON_IMPORT1],
+    'c++': [CPP_INCLUDE0, CPP_INCLUDE1, CPP_INCLUDE2]
+}
+
+SPECIAL_CASE_DEPENDENCIES = {
+    'roscpp': re.compile(r'#include\s*<ros/ros.h>')
 }
 
 
@@ -63,6 +88,44 @@ class SourceCode(PackageFile):
             except UnicodeDecodeError:
                 pass
         return False
+
+    def search_lines_for_patterns(self, patterns):
+        # TODO: Handle multi-line patterns
+        matches = []
+        for line in self.lines:
+            for pattern in patterns:
+                m = pattern.search(line)
+                if m:
+                    matches.append(m.groups())
+        return matches
+
+    def search_lines_for_pattern(self, pattern):
+        return self.search_lines_for_patterns([pattern])
+
+    def get_import_packages(self):
+        pkgs = set()
+        patterns = IMPORT_PATTERNS.get(self.language)
+        if not patterns:
+            return pkgs
+
+        for match in self.search_lines_for_patterns(patterns):
+            pkgs.add(match[0])
+
+        return pkgs
+
+    def get_dependencies(self, dependency_type):
+        deps = set()
+        if dependency_type == DependencyType.TEST and 'test' not in self.tags:
+            return deps
+
+        for pkg in self.get_import_packages():
+            # TODO: Check if its a real package
+            deps.add(pkg)
+
+        for dep, pattern in SPECIAL_CASE_DEPENDENCIES.items():
+            if self.search_lines_for_pattern(pattern):
+                deps.add(dep)
+        return deps
 
     def is_executable(self):
         return os.access(self.file_path, os.X_OK)

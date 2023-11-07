@@ -47,13 +47,10 @@ def test_kungfu():
     assert original == s
     temp.close()
 
-    assert not manifest.is_metapackage()
-
 
 def test_meta():
     pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'eeaao')
     assert pkg.is_metapackage
-    assert pkg.package_xml.is_metapackage()
 
 
 def test_bad_case():

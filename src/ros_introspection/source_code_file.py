@@ -1,15 +1,6 @@
 import re
 
-from .resource_list import get_python_dependency, is_package
-
-PKG = r'([^\.;]+)(\.?[^;]*)?'
-PYTHON1 = '^import ' + PKG
-PYTHON2 = 'from ' + PKG + ' import .*'
-CPLUS = re.compile(r'#include\s*[<\\"]([^/]*)/?([^/]*)[>\\"]')          # Zero or one slash
-CPLUS2 = re.compile(r'#include\s*[<\\"]([^/]*)/([^/]*)/([^/]*)[>\\"]')  # Two slashes
-ROSCPP = re.compile(r'#include\s*<ros/ros.h>')
-
-EXPRESSIONS = [re.compile(PYTHON1), re.compile(PYTHON2), CPLUS, CPLUS2]
+from .resource_list import get_python_dependency
 
 
 class SourceCodeFile:
@@ -27,18 +18,6 @@ class SourceCodeFile:
         for pattern in patterns:
             matches += pattern.findall(contents)
         return matches
-
-    def search_lines_for_patterns(self, patterns):
-        matches = []
-        for line in self.lines:
-            for pattern in patterns:
-                m = pattern.search(line)
-                if m:
-                    matches.append(m.groups())
-        return matches
-
-    def search_lines_for_pattern(self, pattern):
-        return self.search_lines_for_patterns([pattern])
 
     def modify_with_patterns(self, patterns, verbose):
         """
@@ -68,21 +47,6 @@ class SourceCodeFile:
                 m = pattern.search(s)
             if changed:
                 self.replace_contents(s)
-
-    def get_import_packages(self):
-        pkgs = set()
-        for match in self.search_lines_for_patterns(EXPRESSIONS):
-            pkgs.add(match[0])
-        if len(self.search_lines_for_pattern(ROSCPP)) > 0:
-            pkgs.add('roscpp')
-        return sorted(pkgs)
-
-    def get_dependencies(self):
-        deps = []
-        for pkg in self.get_import_packages():
-            if is_package(pkg):
-                deps.append(pkg)
-        return deps
 
     def get_external_python_dependencies(self):
         deps = []
