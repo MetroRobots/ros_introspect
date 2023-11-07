@@ -15,6 +15,10 @@ class UrdfFile(PackageFile):
     def is_type(cls, path):
         return path.suffix in ['.urdf', '.xacro']
 
+    @classmethod
+    def needs_share_installation(cls):
+        return True
+
     def get_dependencies(self, dependency_type):
         deps = set()
         if dependency_type != DependencyType.RUN:

@@ -31,6 +31,10 @@ class PackageFile:
     def attribute_name(cls):
         return cls.category_name().replace('.', '_').lower()
 
+    @classmethod
+    def needs_share_installation(cls):
+        return False
+
     def get_dependencies(self, dependency_type):
         return set()
 

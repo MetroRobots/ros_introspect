@@ -8,6 +8,7 @@ class Launch(PackageFile):
     def get_dependencies(self, dependency_type):
         deps = set()
         if self.is_test:
+            # TODO: Maybe add rostest
             if dependency_type != DependencyType.TEST:
                 return deps
         else:
@@ -18,6 +19,10 @@ class Launch(PackageFile):
         deps.update(self.get_include_pkgs())
         deps.update(self.get_misc_pkgs())
         return deps
+
+    @classmethod
+    def needs_share_installation(cls):
+        return True
 
 
 @package_file

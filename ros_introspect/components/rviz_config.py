@@ -51,6 +51,10 @@ class RVizConfig(PackageFile):
     def is_type(cls, path):
         return path.suffix == '.rviz'
 
+    @classmethod
+    def needs_share_installation(cls):
+        return True
+
     def get_class_dicts(self):
         return get_class_dicts(self.contents)
 

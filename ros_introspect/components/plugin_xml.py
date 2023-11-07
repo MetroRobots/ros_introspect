@@ -59,6 +59,10 @@ class PluginXML(PackageFile):
             line = f.readline()
             return '<library' in line or '<class_libraries' in line
 
+    @classmethod
+    def needs_share_installation(cls):
+        return True
+
     def contains_library(self, library_name, pkg, name):
         if library_name not in self.libraries and self.library_prefix:
             library_name = f'lib{library_name}'
