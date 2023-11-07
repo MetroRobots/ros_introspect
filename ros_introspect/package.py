@@ -108,6 +108,10 @@ class Package:
         assert self.package_xml
         self.name = self.package_xml.name
         self.build_type = self.package_xml.build_type
+        self.is_metapackage = self.package_xml.contains_node('metapackage')
+
+        if self.cmake:
+            self.is_metapackage = self.is_metapackage or len(self.cmake.content_map['catkin_metapackage']) > 0
 
         # Update cross-file properties
         if self.cmake and self.source_code:

@@ -160,9 +160,6 @@ class CMake:
                 return i_index
         return len(self.contents)
 
-    def is_metapackage(self):
-        return len(self.content_map['catkin_metapackage']) > 0
-
     def get_libraries(self):
         return list(self.get_source_build_rules('add_library').keys())
 

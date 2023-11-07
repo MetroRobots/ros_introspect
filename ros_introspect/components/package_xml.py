@@ -137,13 +137,8 @@ class PackageXML(SingularPackageFile):
         if el:
             return el.childNodes[0].nodeValue
 
-    def is_metapackage(self):
-        for node in self.root.getElementsByTagName('export'):
-            for child in node.childNodes:
-                if child.nodeType == child.ELEMENT_NODE:
-                    if child.nodeName == 'metapackage':
-                        return True
-        return False
+    def contains_node(self, node_name):
+        return bool(self.root.getElementsByTagName(node_name))
 
     def insert_new_tag(self, tag, index):
         before = self.root.childNodes[:index + 1]

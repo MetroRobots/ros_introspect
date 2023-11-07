@@ -4,11 +4,7 @@ from .package_structure import get_package_structure
 class Package:
     def __init__(self, root):
         package_structure = get_package_structure(root)
-
         self.misc_files = list(package_structure[None].keys()) + list(package_structure['models'].keys())
-
-    def is_metapackage(self):
-        return self.manifest.is_metapackage() or (self.cmake and self.cmake.is_metapackage())
 
     def get_test_dependencies(self):
         packages = set()
