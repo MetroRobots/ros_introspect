@@ -1,58 +1,19 @@
-import datetime
-import os
+from ros_introspect.util import get_download_data, CACHE_FOLDER
 
 import requests
 from .ros_util import list_packages, list_interfaces
 
 import yaml
 
-DOT_ROS_FOLDER = os.path.expanduser('~/.ros')
-PY_DEP_FILENAME = os.path.join(DOT_ROS_FOLDER, 'py_deps.yaml')
-LICENSES_FILENAME = os.path.join(DOT_ROS_FOLDER, 'license_info.yaml')
-
 PYTHON_DEPS = {}
 LICENSE_INFO = {}
-
-
-def make_download_attempt(filename, url, json=True, preprocess_fne=None):
-    now = datetime.datetime.now()
-    if os.path.exists(filename):
-        data = yaml.safe_load(open(filename))
-
-        if 'last_download' in data and now - data['last_download'] < datetime.timedelta(days=3):
-            # Data is sufficiently new
-            return data
-
-    # Attempt a download
-    try:
-        req = requests.get(url)
-        if req.status_code != 200:
-            raise RuntimeError('Non-OK Status')
-    except requests.exceptions.ConnectionError:
-        print(f'Cannot retrieve {filename}')
-        return
-
-    if json:
-        data = req.json()
-    else:
-        data = yaml.safe_load(req.text)
-
-    if preprocess_fne:
-        data = preprocess_fne(data)
-
-    data['last_download'] = now
-
-    if not os.path.exists(DOT_ROS_FOLDER):
-        os.mkdir(DOT_ROS_FOLDER)
-    yaml.dump(data, open(filename, 'w'))
-    return data
+LICENSES_FILENAME = 'license_info.yaml'
 
 
 def maybe_download_python_deps():
     global PYTHON_DEPS
-    PYTHON_DEPS = make_download_attempt(PY_DEP_FILENAME,
-                                        'https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/python.yaml',
-                                        json=False)
+    PYTHON_DEPS = get_download_data(
+        'https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/python.yaml', 'py_deps.yaml')
 
 
 def get_python_dependency(key):
@@ -65,9 +26,9 @@ def get_python_dependency(key):
 maybe_download_python_deps()
 
 
-def preprocess_licenses(data):
+def format_license_info(req):
     processed = {}
-    for license_dict in data:
+    for license_dict in req.json():
         key = license_dict['key']
         del license_dict['key']
         processed[key] = license_dict
@@ -80,9 +41,7 @@ def get_license_info(license_key, get_body=False, allow_uncommon_downloads=False
 
     # Download list of common licenses if not present
     if not LICENSE_INFO:
-        LICENSE_INFO = make_download_attempt(LICENSES_FILENAME,
-                                             'https://api.github.com/licenses',
-                                             preprocess_fne=preprocess_licenses)
+        LICENSE_INFO = get_download_data('https://api.github.com/licenses', LICENSES_FILENAME, format_license_info)
 
     if license_key not in LICENSE_INFO:
         if license_key in LICENSE_INFO.get('invalid', []) or not allow_uncommon_downloads:
@@ -112,7 +71,7 @@ def get_license_info(license_key, get_body=False, allow_uncommon_downloads=False
         else:
             license_info.update(req.json())
 
-        yaml.dump(LICENSE_INFO, open(LICENSES_FILENAME, 'w'))
+        yaml.dump(LICENSE_INFO, open(CACHE_FOLDER / LICENSES_FILENAME, 'w'))
 
     return license_info
 
