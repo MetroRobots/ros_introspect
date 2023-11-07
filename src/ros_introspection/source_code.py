@@ -7,12 +7,6 @@ ALL_CAPS_PATTERN = re.compile(r'^[A-Z]+$')
 
 
 class SourceCode:
-    def __init__(self, filenames, pkg_name):
-        self.pkg_name = pkg_name
-        self.sources = {}
-        for rel_fn, file_path in filenames.items():
-            self.sources[rel_fn] = SourceCodeFile(rel_fn, file_path)
-
     def has_header_files(self):
         goal_folder = os.path.join('include', self.pkg_name)
         for source_fn in self.sources:
@@ -34,18 +28,6 @@ class SourceCode:
                 continue
             tagged.append(source)
         return tagged
-
-    def setup_tags(self, cmake):
-        for tag, files in [('library', cmake.get_library_source()),
-                           ('executable', cmake.get_executable_source()),
-                           ('test', cmake.get_test_source())]:
-            for fn in files:
-                if fn and fn[0] == '$':
-                    continue
-                if fn in self.sources:
-                    self.sources[fn].tags.add(tag)
-                elif not ALL_CAPS_PATTERN.match(fn):
-                    print('    File %s found in CMake not found in folder!' % fn)
 
     def get_build_dependencies(self):
         packages = set()

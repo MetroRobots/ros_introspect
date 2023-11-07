@@ -83,7 +83,6 @@ class Package:
         # Syntactic sugar to allow for direct attribute access
         for subtype in PackageFile.SUBTYPES:
             attr_name = subtype.attribute_name()
-            print(attr_name)
             if subtype.is_singular():
                 setattr(self, attr_name, None)
             else:
@@ -109,6 +108,10 @@ class Package:
         assert self.package_xml
         self.name = self.package_xml.name
         self.build_type = self.package_xml.build_type
+
+        # Update cross-file properties
+        if self.cmake and self.source_code:
+            self.setup_source_tags()
 
     @property
     def ros_version(self):
@@ -138,6 +141,16 @@ class Package:
         if self.name in deps:
             deps.remove(self.name)
         return deps
+
+    def setup_source_tags(self):
+        for tag, files in self.cmake.get_source_tags():
+            for rel_fn in files:
+                if rel_fn in self.components_by_name:
+                    self.components_by_name[rel_fn].tags.add(tag)
+                else:
+                    # TODO: Do not raise if rel_fn[0] == '$'
+                    # TODO: Do not raise if rel_fn matches ALL_CAPS_PATTERN
+                    raise RuntimeWarning(f'Cannot find {rel_fn} in package {self.name}')
 
     def save(self):
         for component in self:

@@ -1,10 +1,9 @@
-from ros_introspect.components.cmake import CommandGroup, Command
+from ros_introspect.components.cmake import CommandGroup, Command, ROS_TESTING_FLAGS, is_testing_group
 
 BUILD_TARGET_COMMANDS = ['qt5_wrap_cpp', 'add_library', 'add_executable', 'add_rostest',
                          'target_include_directories', 'add_dependencies', 'target_link_libraries',
                          'set_target_properties', 'ament_target_dependencies']
-TEST_GROUPS = ['CATKIN_ENABLE_TESTING', 'BUILD_TESTING']
-TEST_COMMANDS = [('group', variable) for variable in TEST_GROUPS] + \
+TEST_COMMANDS = [('group', variable) for variable in ROS_TESTING_FLAGS] + \
                 ['catkin_download_test_data',
                  'roslint_cpp', 'roslint_python', 'roslint_add_test',
                  'catkin_add_nosetests', 'catkin_add_gtest', 'ament_add_gtest', 'add_rostest_gtest',
@@ -24,11 +23,6 @@ BASE_ORDERING = ['cmake_minimum_required', 'project',
                  'generate_dynamic_reconfigure_options', 'generate_messages', 'catkin_package', 'catkin_metapackage',
                  BUILD_TARGET_COMMANDS + ['include_directories'],
                  ]
-
-
-def is_testing_group(content):
-    cmd = content.initial_tag
-    return cmd.command_name == 'if' and cmd.sections and cmd.sections[0].name in TEST_GROUPS
 
 
 def get_style(cmake):
@@ -169,33 +163,6 @@ class CMake:
     def is_metapackage(self):
         return len(self.content_map['catkin_metapackage']) > 0
 
-    def get_source_build_rules(self, tag, resolve_target_name=False):
-        rules = {}
-        for cmd in self.content_map[tag]:
-            resolved_tokens = self.get_resolved_tokens(cmd, True)
-
-            if resolve_target_name:
-                target = resolved_tokens[0]
-            else:
-                tokens = cmd.get_tokens(True)
-                target = tokens[0]
-
-            deps = resolved_tokens[1:]
-            rules[target] = deps
-        return rules
-
-    def get_source_helper(self, tag):
-        lib_src = set()
-        for deps in self.get_source_build_rules(tag).values():
-            lib_src.update(deps)
-        return lib_src
-
-    def get_library_source(self):
-        return self.get_source_helper('add_library')
-
-    def get_executable_source(self):
-        return self.get_source_helper('add_executable')
-
     def get_libraries(self):
         return list(self.get_source_build_rules('add_library').keys())
 
@@ -222,20 +189,6 @@ class CMake:
             if token not in targets:
                 targets.append(token)
         return targets
-
-    def get_test_sections(self):
-        sections = []
-        for content in self.content_map['group']:
-            if is_testing_group(content):
-                sections.append(content.sub)
-        return sections
-
-    def get_test_source(self):
-        test_files = set()
-        for sub in self.get_test_sections():
-            test_files.update(sub.get_library_source())
-            test_files.update(sub.get_executable_source())
-        return test_files
 
     def get_test_section(self, create_if_needed=False):
         sections = self.get_test_sections()
