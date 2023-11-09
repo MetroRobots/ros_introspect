@@ -277,9 +277,3 @@ class CMake:
             if version < new_version:
                 section.values[0] = '.'.join(map(str, new_version))
                 cmd.changed = True
-
-    def write(self, fn=None):
-        if fn is None:
-            fn = self.file_path
-        with open(fn, 'w') as cmake:
-            cmake.write(str(self))

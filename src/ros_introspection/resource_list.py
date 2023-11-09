@@ -1,8 +1,6 @@
 from ros_introspect.util import get_download_data, CACHE_FOLDER
 
 import requests
-from .ros_util import list_packages, list_interfaces
-
 import yaml
 
 PYTHON_DEPS = {}
@@ -81,26 +79,3 @@ def get_available_licenses():
     if not LICENSE_INFO:
         get_license_info(None)
     return [key for key in LICENSE_INFO.keys() if key not in ['last_download', 'invalid']]
-
-
-PACKAGES = set(list_packages())
-MESSAGES = set()
-SERVICES = set()
-ACTIONS = set()
-
-for pkg in PACKAGES:
-    for mode, ros_set in [('.msg', MESSAGES), ('.srv', SERVICES), ('.action', ACTIONS)]:
-        for pkg, gen in list_interfaces(pkg, mode):
-            ros_set.add((pkg, gen))
-
-
-def is_package(pkg):
-    return pkg in PACKAGES
-
-
-def is_message(pkg, msg):
-    return (pkg, msg) in MESSAGES
-
-
-def is_service(pkg, srv):
-    return (pkg, srv) in SERVICES

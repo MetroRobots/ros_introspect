@@ -1,4 +1,5 @@
 from ..package import PackageFile, DependencyType, package_file
+from ..ros_resources import ROSResources
 import os
 import re
 
@@ -47,6 +48,7 @@ class SourceCode(PackageFile):
     def __init__(self, full_path, package):
         super().__init__(full_path, package)
         self.changed_contents = None
+        self.resources = ROSResources()  # Singleton
 
         self.lines = list(map(str.strip, self.get_contents().split('\n')))
         if self.full_path.suffix in CPP_EXTS:
@@ -119,8 +121,8 @@ class SourceCode(PackageFile):
             return deps
 
         for pkg in self.get_import_packages():
-            # TODO: Check if its a real package
-            deps.add(pkg)
+            if self.resources.is_package(pkg):
+                deps.add(pkg)
 
         for dep, pattern in SPECIAL_CASE_DEPENDENCIES.items():
             if self.search_lines_for_pattern(pattern):
