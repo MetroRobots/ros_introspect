@@ -1,7 +1,9 @@
 import collections
-import pathlib
-from .finder import find_package_roots, is_repo_marker
 from enum import IntEnum
+import pathlib
+import shutil
+
+from .finder import find_package_roots, is_repo_marker
 
 DependencyType = IntEnum('DependencyType', ['BUILD', 'RUN', 'TEST'])
 
@@ -44,7 +46,9 @@ class PackageFile:
         self.write(self.full_path)
 
     def write(self, output_path):
-        raise NotImplementedError
+        # By default, write with no modifications
+        if self.full_path != output_path:
+            shutil.copy(self.full_path, output_path)
 
     def __repr__(self):
         return str(self.rel_fn)
@@ -64,6 +68,10 @@ class MiscPackageFile(PackageFile):
     @classmethod
     def category_name(cls):
         return 'Other Files'
+
+    @classmethod
+    def needs_share_installation(cls):
+        return True
 
 
 def package_file(cls):

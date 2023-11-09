@@ -86,10 +86,6 @@ def test_bad_component():
         FakeComponent.is_type('')
     assert FakeComponent.category_name() == 'FakeComponent'
 
-    fc = FakeComponent(TEST_DATA_FOLDER / 'jobu' / 'kpop', TEST_DATA_FOLDER)
-    with pytest.raises(NotImplementedError):
-        fc.write('')
-
 
 def test_all_components():
     folder = TEST_DATA_FOLDER / 'waymond'
@@ -101,4 +97,4 @@ def test_all_components():
         with tempfile.NamedTemporaryFile(mode='w', prefix=str(folder) + '/') as temp:
             p = pathlib.Path(temp.name)
             st = subtype(p, pkg)
-            st.write(temp.name)
+            st.write(pathlib.Path(temp.name))

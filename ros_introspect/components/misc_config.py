@@ -1,14 +1,17 @@
 from ..package import PackageFile, package_file
 
+MISC_CONFIGS = {
+    '.travis.yml',
+    '.pre-commit-config.yaml',
+}
+
 
 @package_file
-class Documentation(PackageFile):
+class MiscConfig(PackageFile):
     @classmethod
     def is_type(cls, path):
-        if path.suffix in ['.rst', '.md']:
+        if path.name in MISC_CONFIGS:
             return True
-        if 'doc' in path.parts:
-            return True
-        if path.stem.lower() == 'license':
+        if '.github' in path.parts:
             return True
         return False
