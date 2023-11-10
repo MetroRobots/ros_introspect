@@ -4,6 +4,7 @@ import pathlib
 import shutil
 
 from .finder import find_package_roots, is_repo_marker
+from .util import convert_to_underscore_notation
 
 DependencyType = IntEnum('DependencyType', ['BUILD', 'RUN', 'TEST'])
 
@@ -31,7 +32,7 @@ class PackageFile:
 
     @classmethod
     def attribute_name(cls):
-        return cls.category_name().replace('.', '_').lower()
+        return convert_to_underscore_notation(cls.category_name())
 
     @classmethod
     def needs_share_installation(cls):
@@ -88,6 +89,8 @@ def infer_package_file(path, package):
 
 class Package:
     def __init__(self, root):
+        if isinstance(root, str):
+            root = pathlib.Path(root)
         self.root = root
         self.components_by_type = collections.defaultdict(list)
         self.components_by_name = collections.defaultdict(list)
@@ -122,8 +125,11 @@ class Package:
         self.build_type = self.package_xml.build_type
         self.is_metapackage = self.package_xml.contains_node('metapackage')
 
-        if self.cmake:
-            self.is_metapackage = self.is_metapackage or len(self.cmake.content_map['catkin_metapackage']) > 0
+        if self.cmakes:
+            self.cmake = self.cmakes[0]
+            self.is_metapackage = self.is_metapackage or self.cmake.is_metapackage
+        else:
+            self.cmake = None
 
         # Update cross-file properties
         if self.cmake and self.source_code:

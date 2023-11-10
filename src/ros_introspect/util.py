@@ -1,5 +1,6 @@
 import datetime
 import pathlib
+import re
 import requests
 import yaml
 
@@ -41,3 +42,13 @@ def get_download_data(url, filename, data_formatter=None, cache_age_days=3):
     CACHE_FOLDER.mkdir(exist_ok=True, parents=True)
     yaml.dump(data, open(cache_filepath, 'w'))
     return data
+
+
+def convert_to_underscore_notation(name):
+    # https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+
+def convert_to_caps_notation(name):
+    return ''.join([x.title() for x in name.split('_')])

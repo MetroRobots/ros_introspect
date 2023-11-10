@@ -55,6 +55,10 @@ class RVizConfig(PackageFile):
     def needs_share_installation(cls):
         return True
 
+    @classmethod
+    def attribute_name(cls):
+        return 'rviz_config'
+
     def get_class_dicts(self):
         return get_class_dicts(self.contents)
 

@@ -63,6 +63,10 @@ class PackageXML(SingularPackageFile):
     def category_name(cls):
         return 'package.xml'
 
+    @classmethod
+    def attribute_name(cls):
+        return 'package_xml'
+
     @property
     def name(self):
         name_tags = self.root.getElementsByTagName('name')

@@ -14,10 +14,15 @@ class CMake(PackageFile):
     def __init__(self, full_path, package):
         super().__init__(full_path, package)
         self.contents = parse_file(self.full_path)
+        self.is_metapackage = len(self.contents.content_map['catkin_metapackage']) > 0
 
     @classmethod
     def is_type(cls, path):
         return path.name == 'CMakeLists.txt'
+
+    @classmethod
+    def attribute_name(cls):
+        return 'cmakes'
 
     def get_test_sections(self):
         for command_group in self.contents.content_map['group']:
