@@ -93,6 +93,3 @@ class SourceCode:
         scf = SourceCodeFile(rel_fn, file_path)
         self.sources[rel_fn] = scf
         return scf
-
-    def __repr__(self):
-        return '\n'.join(map(str, sorted(self.sources.values())))
