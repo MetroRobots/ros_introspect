@@ -52,3 +52,21 @@ def find_sibling_package_roots(package_folder):
             continue
         if is_package_root(subfolder) and subfolder != package_folder:
             yield subfolder
+
+
+def walk(root):
+    """Yield the paths of all the "valid" files in a directory, relative to the directory"""
+
+    queue = [root]
+    while queue:
+        folder = queue.pop(0)
+        for subpath in folder.iterdir():
+            if subpath.is_dir():
+                # Folder
+                if not is_repo_marker(subpath):
+                    queue.append(subpath)
+            else:
+                # File
+                if subpath.suffix == '.pyc' or subpath.suffix.endswith('~'):
+                    continue
+                yield subpath.relative_to(root)

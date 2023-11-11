@@ -130,7 +130,7 @@ class SourceCode(PackageFile):
         return deps
 
     def is_executable(self):
-        return os.access(self.file_path, os.X_OK)
+        return os.access(self.full_path, os.X_OK)
 
     def write(self, output_path):
         with open(output_path, 'w') as f:

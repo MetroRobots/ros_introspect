@@ -5,7 +5,7 @@ ROS_TESTING_FLAGS = ['CATKIN_ENABLE_TESTING', 'BUILD_TESTING']
 
 
 def is_testing_group(command_group):
-    cmd = command_group.initial_tag
+    cmd = command_group.initial_cmd
     return cmd.command_name == 'if' and cmd.first_token() in ROS_TESTING_FLAGS
 
 

@@ -3,7 +3,7 @@ from enum import IntEnum
 import pathlib
 import shutil
 
-from .finder import find_package_roots, is_repo_marker
+from .finder import find_package_roots, walk
 from .util import convert_to_underscore_notation
 
 DependencyType = IntEnum('DependencyType', ['BUILD', 'RUN', 'TEST'])
@@ -104,20 +104,8 @@ class Package:
                 setattr(self, attr_name, self.components_by_type[subtype])
 
         # Walk all files
-        queue = [root]
-        while queue:
-            folder = queue.pop(0)
-            for subpath in folder.iterdir():
-                if subpath.is_dir():
-                    # Folder
-                    if is_repo_marker(subpath):
-                        continue
-                    queue.append(subpath)
-                else:
-                    # File
-                    if subpath.suffix == '.pyc' or subpath.suffix.endswith('~'):
-                        continue
-                    self.add_file(infer_package_file(subpath, self))
+        for subpath in walk(root):
+            self.add_file(infer_package_file(root / subpath, self))
 
         # Get Key Properties from Manifest
         assert self.package_xml
@@ -165,7 +153,7 @@ class Package:
         return deps
 
     def setup_source_tags(self):
-        for tag, files in self.cmake.get_source_tags():
+        for tag, files in self.cmake.get_source_tags().items():
             for rel_fn in files:
                 if rel_fn in self.components_by_name:
                     self.components_by_name[rel_fn].tags.add(tag)

@@ -108,7 +108,7 @@ def get_sort_key(content, anchors, ordering):
     key = ()
     if content.__class__ == CommandGroup:
         key_token = ()
-        for token in content.initial_tag.get_tokens(include_name=True):
+        for token in content.initial_cmd.get_tokens(include_name=True):
             if token == 'NOT':
                 continue
             key_token = token
