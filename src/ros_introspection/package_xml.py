@@ -1,5 +1,5 @@
 from ros_introspect.components.package_xml import INITIAL_TAGS, MBLOCK_TAGS, DEPEND_TAGS, FINAL_TAGS, PEOPLE_TAGS
-from ros_introspect.components.package_xml import INDENT_PATTERN, FORMAT_3_HEADER
+from ros_introspect.components.package_xml import FORMAT_3_HEADER
 import collections
 
 # In most manifests, the ordering of the mblock doesn't matter, but we sort the depends
@@ -195,19 +195,6 @@ class PackageXML:
             existing_test = self.get_packages('test')
             test_depends = set(test_depends) - existing_build - build_depends - existing_test
             self.insert_new_packages('test_depend', test_depends)
-
-    def remove_element(self, element):
-        """Remove the given element AND the text element before it if it is just an indentation."""
-        parent = element.parentNode
-        if not parent:
-            return
-        index = parent.childNodes.index(element)
-        if index > 0:
-            previous = parent.childNodes[index - 1]
-            if previous.nodeType == previous.TEXT_NODE and INDENT_PATTERN.match(previous.nodeValue):
-                parent.removeChild(previous)
-        parent.removeChild(element)
-        self.changed = True
 
     def remove_dependencies(self, name, pkgs):
         for el in self.root.getElementsByTagName(name):

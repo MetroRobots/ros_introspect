@@ -165,6 +165,19 @@ class PackageXML(SingularPackageFile):
         for tag in tags:
             self.insert_new_tag(tag)
 
+    def remove_element(self, element):
+        """Remove the given element AND the text element before it if it is just an indentation."""
+        parent = element.parentNode
+        if not parent:
+            return
+        index = parent.childNodes.index(element)
+        if index > 0:
+            previous = parent.childNodes[index - 1]
+            if previous.nodeType == previous.TEXT_NODE and INDENT_PATTERN.match(previous.nodeValue):
+                parent.removeChild(previous)
+        parent.removeChild(element)
+        self.changed = True
+
     def write(self, output_path):
         s = self.tree.toxml(self.tree.encoding)
         index = get_package_tag_index(s)
