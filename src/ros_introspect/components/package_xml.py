@@ -1,4 +1,4 @@
-from ..package import SingularPackageFile, package_file
+from ..package import SingularPackageFile, package_file, DependencyType
 from xml.dom.minidom import parseString as parse_xml
 from xml.parsers.expat import ExpatError
 import re
@@ -23,6 +23,61 @@ FORMAT_3_HEADER = """<?xml version="1.0"?>
   href="http://download.ros.org/schema/package_format3.xsd"
   schematypens="http://www.w3.org/2001/XMLSchema"?>
 """
+
+# In most manifests, the ordering of the mblock doesn't matter, but we sort the depends
+ORDERING = INITIAL_TAGS + [MBLOCK_TAGS] + DEPEND_TAGS + FINAL_TAGS
+# In V3 manifests, we ensure the mblock is sorted, but not the depends
+ORDERING_V3 = INITIAL_TAGS + MBLOCK_TAGS + DEPEND_TAGS + FINAL_TAGS
+
+
+def get_ordering_index(name, whiny=True, manifest_version=None):
+    if manifest_version and manifest_version >= 3:
+        ordering = ORDERING_V3
+    else:
+        ordering = ORDERING
+
+    for i, o in enumerate(ordering):
+        if isinstance(o, list):
+            if name in o:
+                return i
+        elif name == o:
+            return i
+    if name and whiny:
+        print('\tUnsure of ordering for ' + name)
+    return len(ordering)
+
+
+def get_sort_key(node, alphabetize_depends=True):
+    if node:
+        name = node.nodeName
+    else:
+        name = None
+
+    index = get_ordering_index(name)
+
+    if not alphabetize_depends:
+        return index
+    if name and 'depend' in name:
+        return index, node.firstChild.data
+    else:
+        return index, None
+
+
+def get_chunks(children):
+    """Given the children, group the elements into tuples.
+
+    Tuple format: (an element node, [(some number of text nodes), that element node again])
+    """
+    chunks = []
+    current = []
+    for child_node in children:
+        current.append(child_node)
+        if child_node.nodeType == child_node.ELEMENT_NODE:
+            chunks.append((child_node, current))
+            current = []
+    if len(current) > 0:
+        chunks.append((None, current))
+    return chunks
 
 
 def get_package_tag_index(s, key='<package'):
@@ -118,9 +173,28 @@ class PackageXML(SingularPackageFile):
         return elements
 
     def get_packages_by_tag(self, tag):
-        pkgs = []
+        pkgs = set()
         for el in self.root.getElementsByTagName(tag):
-            pkgs.append(el.childNodes[0].nodeValue)
+            pkgs.add(el.childNodes[0].nodeValue)
+        return pkgs
+
+    def get_dependencies(self, dependency_type):
+        keys = []
+        if dependency_type == DependencyType.BUILD:
+            keys.append('build_depend')
+
+        if self.xml_format == 1 and dependency_type == DependencyType.RUN:
+            keys.append('run_depend')
+        if self.xml_format >= 2 and dependency_type != DependencyType.TEST:
+            keys.append('depend')
+            if dependency_type == DependencyType.RUN:
+                keys.append('exec_depend')
+        if dependency_type == DependencyType.TEST:
+            keys.append('test_depend')
+
+        pkgs = set()
+        for key in keys:
+            pkgs |= self.get_packages_by_tag(key)
         return pkgs
 
     def get_people(self):
@@ -144,7 +218,15 @@ class PackageXML(SingularPackageFile):
     def contains_node(self, node_name):
         return bool(self.root.getElementsByTagName(node_name))
 
-    def insert_new_tag(self, tag, index):
+    def create_new_tag(self, node_name, node_text):
+        node = self.tree.createElement(node_name)
+        node.appendChild(self.tree.createTextNode(node_text))
+        self.insert_new_tag(node)
+
+    def insert_new_tag(self, tag, index=None):
+        if index is None:
+            index = len(self.root.childNodes) - 2
+
         before = self.root.childNodes[:index + 1]
         after = self.root.childNodes[index + 1:]
 
@@ -164,6 +246,56 @@ class PackageXML(SingularPackageFile):
     def insert_new_tags(self, tags):
         for tag in tags:
             self.insert_new_tag(tag)
+
+    def insert_new_packages(self, tag, values):
+        for pkg in sorted(values):
+            self.create_new_tag(tag, pkg)
+
+    def add_dependencies(self, dependency_dict, prefer_depend_tag=True):
+        build_depends = dependency_dict[DependencyType.BUILD]
+        run_depends = dependency_dict[DependencyType.RUN]
+        test_depends = dependency_dict[DependencyType.TEST]
+
+        if self.xml_format == 1:
+            run_depends.update(build_depends)
+
+        existing_build = self.get_dependencies(DependencyType.BUILD)
+        existing_run = self.get_dependencies(DependencyType.RUN)
+        build_depends = build_depends - existing_build
+        run_depends = run_depends - existing_run
+
+        # Todo: Just insert run depend
+        if self.xml_format == 1:
+            print(build_depends)
+            print(run_depends)
+            self.insert_new_packages('build_depend', build_depends)
+            self.insert_new_packages('run_depend', run_depends)
+        elif prefer_depend_tag:
+            depend_tags = build_depends.union(run_depends)
+
+            # Remove tags that overlap with new depends
+            self.remove_dependencies('build_depend', existing_build.intersection(depend_tags))
+            self.remove_dependencies('exec_depend', existing_run.intersection(depend_tags))
+
+            # Insert depends
+            self.insert_new_packages('depend', depend_tags)
+        else:
+            both = build_depends.intersection(run_depends)
+            self.insert_new_packages('depend', both)
+            self.insert_new_packages('build_depend', build_depends - both)
+            self.insert_new_packages('exec_depend', build_depends - both - existing_run)
+            self.insert_new_packages('exec_depend', run_depends - both)
+
+        if test_depends is not None and len(test_depends) > 0:
+            existing_test = self.get_packages('test')
+            test_depends = set(test_depends) - existing_build - build_depends - existing_test
+            self.insert_new_packages('test_depend', test_depends)
+
+    def remove_dependencies(self, name, pkgs):
+        for el in self.root.getElementsByTagName(name):
+            pkg = el.childNodes[0].nodeValue
+            if pkg in pkgs:
+                self.remove_element(el)
 
     def remove_element(self, element):
         """Remove the given element AND the text element before it if it is just an indentation."""

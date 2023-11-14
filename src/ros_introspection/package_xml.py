@@ -1,28 +1,7 @@
-from ros_introspect.components.package_xml import INITIAL_TAGS, MBLOCK_TAGS, DEPEND_TAGS, FINAL_TAGS, PEOPLE_TAGS
-from ros_introspect.components.package_xml import FORMAT_3_HEADER
 import collections
-
-# In most manifests, the ordering of the mblock doesn't matter, but we sort the depends
-ORDERING = INITIAL_TAGS + [MBLOCK_TAGS] + DEPEND_TAGS + FINAL_TAGS
-# In V3 manifests, we ensure the mblock is sorted, but not the depends
-ORDERING_V3 = INITIAL_TAGS + MBLOCK_TAGS + DEPEND_TAGS + FINAL_TAGS
-
-
-def get_ordering_index(name, whiny=True, manifest_version=None):
-    if manifest_version and manifest_version >= 3:
-        ordering = ORDERING_V3
-    else:
-        ordering = ORDERING
-
-    for i, o in enumerate(ordering):
-        if isinstance(o, list):
-            if name in o:
-                return i
-        elif name == o:
-            return i
-    if name and whiny:
-        print('\tUnsure of ordering for ' + name)
-    return len(ordering)
+from ros_introspect.components.package_xml import DEPEND_TAGS, PEOPLE_TAGS
+from ros_introspect.components.package_xml import FORMAT_3_HEADER
+from x import get_ordering_index
 
 
 def replace_package_set(manifest, source_tags, new_tag):
@@ -40,23 +19,6 @@ def replace_package_set(manifest, source_tags, new_tag):
 
 
 class PackageXML:
-    def get_packages(self, mode='build'):
-        keys = []
-        if mode == 'build':
-            keys.append('build_depend')
-        if self.format == 1 and mode == 'run':
-            keys.append('run_depend')
-        if self.format >= 2 and mode != 'test':
-            keys.append('depend')
-            if mode == 'run':
-                keys.append('exec_depend')
-        if mode == 'test':
-            keys.append('test_depend')
-        pkgs = []
-        for key in keys:
-            pkgs += self.get_packages_by_tag(key)
-        return set(pkgs)
-
     def get_child_indexes(self):
         """Return a dictionary based on which children span which indexes.
 
@@ -157,51 +119,6 @@ class PackageXML:
             parent.childNodes = parent.childNodes[:-1] + all_elements + parent.childNodes[-1:]
         self.changed = True
 
-    def insert_new_packages(self, tag, values):
-        for pkg in sorted(values):
-            print('\tInserting %s: %s' % (tag, pkg))
-            node = self.tree.createElement(tag)
-            node.appendChild(self.tree.createTextNode(pkg))
-            self.insert_new_tag(node)
-
-    def add_packages(self, build_depends, run_depends, test_depends=None, prefer_depend_tag=True):
-        if self.format == 1:
-            run_depends.update(build_depends)
-        existing_build = self.get_packages('build')
-        existing_run = self.get_packages('run')
-        build_depends = build_depends - existing_build
-        run_depends = run_depends - existing_run
-        # Todo: Just insert run depend
-        if self.format == 1:
-            self.insert_new_packages('build_depend', build_depends)
-            self.insert_new_packages('run_depend', run_depends)
-        elif prefer_depend_tag:
-            depend_tags = build_depends.union(run_depends)
-
-            # Remove tags that overlap with new depends
-            self.remove_dependencies('build_depend', existing_build.intersection(depend_tags))
-            self.remove_dependencies('exec_depend', existing_run.intersection(depend_tags))
-
-            # Insert depends
-            self.insert_new_packages('depend', depend_tags)
-        else:
-            both = build_depends.intersection(run_depends)
-            self.insert_new_packages('depend', both)
-            self.insert_new_packages('build_depend', build_depends - both)
-            self.insert_new_packages('exec_depend', build_depends - both - existing_run)
-            self.insert_new_packages('exec_depend', run_depends - both)
-
-        if test_depends is not None and len(test_depends) > 0:
-            existing_test = self.get_packages('test')
-            test_depends = set(test_depends) - existing_build - build_depends - existing_test
-            self.insert_new_packages('test_depend', test_depends)
-
-    def remove_dependencies(self, name, pkgs):
-        for el in self.root.getElementsByTagName(name):
-            pkg = el.childNodes[0].nodeValue
-            if pkg in pkgs:
-                self.remove_element(el)
-
     def update_people(self, target_name, target_email=None, search_name=None, search_email=None):
         for el in self.get_elements_by_tags(PEOPLE_TAGS):
             name = el.childNodes[0].nodeValue
@@ -259,17 +176,17 @@ class PackageXML:
         return ex_tag
 
     def upgrade(self, new_format=2, quiet=True):
-        if self.format == new_format:
+        if self.xml_format == new_format:
             if not quiet:
-                print('%s already in format %d!' % (self.name, self.format))
+                print('%s already in format %d!' % (self.name, self.xml_format))
             return
 
         if new_format not in [2, 3]:
             raise RuntimeError('Unknown PackageXML version: ' + repr(new_format))
 
-        if self.format == 1:
+        if self.xml_format == 1:
             if not quiet:
-                print('Converting {} from version {} to 2'.format(self.name, self.format))
+                print('Converting {} from version {} to 2'.format(self.name, self.xml_format))
             self._format = 2
             self.root.setAttribute('format', '2')
             replace_package_set(self, ['build_depend', 'run_depend'], 'depend')
@@ -277,7 +194,7 @@ class PackageXML:
 
         if new_format == 3:
             if not quiet:
-                print('Converting {} from version {} to 3'.format(self.name, self.format))
+                print('Converting {} from version {} to 3'.format(self.name, self.xml_format))
             self._format = 3
             self.root.setAttribute('format', '3')
             self.header = FORMAT_3_HEADER
