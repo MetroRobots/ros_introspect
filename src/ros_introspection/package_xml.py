@@ -1,7 +1,6 @@
 import collections
-from ros_introspect.components.package_xml import DEPEND_TAGS, PEOPLE_TAGS
+from ros_introspect.components.package_xml import PEOPLE_TAGS
 from ros_introspect.components.package_xml import FORMAT_3_HEADER
-from x import get_ordering_index
 
 
 def replace_package_set(manifest, source_tags, new_tag):
@@ -19,95 +18,6 @@ def replace_package_set(manifest, source_tags, new_tag):
 
 
 class PackageXML:
-    def get_child_indexes(self):
-        """Return a dictionary based on which children span which indexes.
-
-        The keys are the types of nodes in the xml (build_depend, maintainer, etc).
-        The values are arrays marking the range of elements in the xml root that match that tag.
-
-        For example, tags[build_depend] = [(5, 9), (11, 50)] means that elements [5, 9) and [11, 50) are
-        either build_depend elements (or the strings between them)
-        """
-        tags = collections.defaultdict(list)
-        i = 0
-        current = None
-        current_start = 0
-        current_last = 0
-        while i < len(self.root.childNodes):
-            child = self.root.childNodes[i]
-            if child.nodeType == child.TEXT_NODE:
-                i += 1
-                continue
-
-            name = child.nodeName
-            if name != current:
-                if current:
-                    tags[current].append((current_start, current_last))
-                current_start = i
-                current = name
-            current_last = i
-            i += 1
-        if current:
-            tags[current].append((current_start, current_last))
-        return dict(tags)
-
-    def get_insertion_index(self, tag, tag_value=None):
-        """Return the index where to insert a new element with the given tag type.
-
-        If there are already elements of that type, then either insert after the last matching element,
-        or if the list is alphabetized, insert it in the correct place alphabetically using the tag_value.
-        Otherwise, look at the existing elements, and find ones that are supposed to come the closest
-        before the given tag, and insert after them. If none found, add at the end.
-        """
-        indexes = self.get_child_indexes()
-        # If there are elements of this type already
-        if tag in indexes:
-            if len(indexes[tag]) == 1 and tag in DEPEND_TAGS:
-                start, end = indexes[tag][0]
-                tag_values = []
-                my_index = start
-                for i in range(start, end + 1):
-                    child = self.root.childNodes[i]
-                    if child.nodeType == child.TEXT_NODE:
-                        continue
-                    value = child.firstChild.data
-                    tag_values.append(value)
-                    if tag_value >= value:
-                        my_index = i
-
-                # If already sorted, and first_value is defined (meaning there are existing tags)
-                if tag_values and sorted(tag_values) == tag_values:
-                    # If it should go before the current first tag, we XXX
-                    if tag_value <= tag_values[0]:
-                        return my_index - 1
-
-                    # If it should go before some existing tag
-                    if tag_value <= tag_values[-1]:
-                        return my_index
-
-            # If all else fails, we insert the tag after the last matching tag
-            return indexes[tag][-1][1]  # last match, end index
-
-        # If no elements match this type, then find the right place to insert
-        else:
-            max_index = get_ordering_index(tag, whiny=False)
-            best_tag = None
-            best_index = None
-            for tag in indexes:
-                ni = get_ordering_index(tag, whiny=False)
-                if ni >= max_index:
-                    # This tag should appear after our tag
-                    continue
-
-                if best_tag is None or ni > best_index or indexes[tag][-1] > indexes[best_tag][-1]:
-                    best_tag = tag
-                    best_index = ni
-
-            if best_tag is None:
-                return len(self.root.childNodes)
-            else:
-                return indexes[best_tag][-1][1]
-
     def insert_new_tag_inside_another(self, parent, tag, depth=2):
         all_elements = []
         all_elements.append(self.create_new_tab_element(depth))

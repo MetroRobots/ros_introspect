@@ -1,0 +1,33 @@
+#!/usr/bin/python3
+
+import argparse
+import click
+import pathlib
+from ros_introspect.package import find_packages
+from ros_introspect.components.package_xml import get_sort_key
+
+
+def print_package(element, indent=0):
+    click.secho('  ' * indent, nl=False)
+    if element.nodeType == element.ELEMENT_NODE:
+        click.secho(f'<{element.nodeName}>  ', fg='green', nl=False)
+        if indent > 0:
+            key = get_sort_key(element)
+            click.secho(f'{key}', fg='blue')
+        else:
+            print()
+
+        for child in element.childNodes:
+            print_package(child, indent + 1)
+        click.secho('  ' * indent, nl=False)
+        click.secho(f'</{element.nodeName}>', fg='green')
+    else:
+        click.secho(repr(element.nodeValue), fg='cyan')
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('root', type=pathlib.Path)
+args = parser.parse_args()
+
+for package in find_packages(args.root):
+    print_package(package.package_xml.root)

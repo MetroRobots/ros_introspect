@@ -218,6 +218,21 @@ class PackageXML(SingularPackageFile):
     def contains_node(self, node_name):
         return bool(self.root.getElementsByTagName(node_name))
 
+    def get_insertion_index(self, tag):
+        """Return the index where to insert a new element"""
+        new_key = get_sort_key(tag)
+        prev_i = None
+        for i, child in enumerate(self.root.childNodes):
+            if child.nodeType == child.TEXT_NODE:
+                continue
+            key = get_sort_key(child)
+
+            if key < new_key:
+                prev_i = i
+            elif new_key < key:
+                return prev_i + 1
+        return len(self.root.childNodes) - 2
+
     def create_new_tag(self, node_name, node_text):
         node = self.tree.createElement(node_name)
         node.appendChild(self.tree.createTextNode(node_text))
@@ -225,7 +240,7 @@ class PackageXML(SingularPackageFile):
 
     def insert_new_tag(self, tag, index=None):
         if index is None:
-            index = len(self.root.childNodes) - 2
+            index = self.get_insertion_index(tag)
 
         before = self.root.childNodes[:index + 1]
         after = self.root.childNodes[index + 1:]
@@ -266,8 +281,6 @@ class PackageXML(SingularPackageFile):
 
         # Todo: Just insert run depend
         if self.xml_format == 1:
-            print(build_depends)
-            print(run_depends)
             self.insert_new_packages('build_depend', build_depends)
             self.insert_new_packages('run_depend', run_depends)
         elif prefer_depend_tag:
@@ -287,7 +300,7 @@ class PackageXML(SingularPackageFile):
             self.insert_new_packages('exec_depend', run_depends - both)
 
         if test_depends is not None and len(test_depends) > 0:
-            existing_test = self.get_packages('test')
+            existing_test = self.get_dependencies('test')
             test_depends = set(test_depends) - existing_build - build_depends - existing_test
             self.insert_new_packages('test_depend', test_depends)
 
