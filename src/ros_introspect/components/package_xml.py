@@ -235,10 +235,12 @@ class PackageXML(SingularPackageFile):
                 return prev_i + 1
         return len(self.root.childNodes) - 2
 
-    def create_new_tag(self, node_name, node_text):
+    def create_new_tag(self, node_name, node_text=None):
         node = self.tree.createElement(node_name)
-        node.appendChild(self.tree.createTextNode(node_text))
+        if node_text:
+            node.appendChild(self.tree.createTextNode(node_text))
         self.insert_new_tag(node)
+        return node
 
     def insert_new_tag(self, tag, index=None):
         if index is None:

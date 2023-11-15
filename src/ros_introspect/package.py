@@ -78,6 +78,7 @@ class MiscPackageFile(PackageFile):
 def package_file(cls):
     """Decorator function to add to static list"""
     PackageFile.SUBTYPES.append(cls)
+    return cls
 
 
 def infer_package_file(path, package):

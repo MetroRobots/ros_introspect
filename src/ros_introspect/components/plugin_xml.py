@@ -12,7 +12,6 @@ class PluginXML(PackageFile):
     def __init__(self, full_path, package):
         super().__init__(full_path, package)
 
-        self.library_prefix = (package.ros_version == 1)
         self.has_class_libraries_tag = False
         self.libraries = OrderedDict()
         self.parent_pkgs = set()
@@ -30,8 +29,6 @@ class PluginXML(PackageFile):
 
         for el in tree.getElementsByTagName('library'):
             path = el.getAttribute('path')
-            if self.library_prefix:
-                path = path.replace('lib/lib', '')
             cls = OrderedDict()
             self.libraries[path] = cls
 
@@ -64,7 +61,7 @@ class PluginXML(PackageFile):
         return True
 
     def contains_library(self, library_name, pkg, name):
-        if library_name not in self.libraries and self.library_prefix:
+        if library_name not in self.libraries and self.package.ros_version == 1:
             library_name = f'lib{library_name}'
         if library_name not in self.libraries:
             return False
@@ -94,7 +91,7 @@ class PluginXML(PackageFile):
             indent += 2
 
         for name, lib in self.libraries.items():
-            library_name = 'lib/lib' + name if self.library_prefix else name
+            library_name = 'lib/lib' + name if self.package.ros_version == 1 else name
             s += ' ' * indent + '<library path="%s">\n' % library_name
             for clib in lib.values():
                 s += self.class_str(clib, indent + 2)
