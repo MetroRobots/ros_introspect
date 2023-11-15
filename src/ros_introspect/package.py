@@ -130,6 +130,10 @@ class Package:
         else:
             return 2
 
+    @property
+    def defines_ros_interfaces(self):
+        return self.messages or self.services and self.actions
+
     def add_file(self, package_file):
         subtype = type(package_file)
         self.components_by_type[subtype].append(package_file)

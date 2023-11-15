@@ -206,19 +206,6 @@ class CMake:
         self.add_command(cg)
         return cg.sub
 
-    def get_command_section(self, command_name, section_name):
-        """Return the first command that matches the command name and has a matching section name.
-
-        If the section name is not found, return a command with the matching command name
-        """
-        if len(self.content_map[command_name]) == 0:
-            return None, None
-        for cmd in self.content_map[command_name]:
-            s = cmd.get_section(section_name)
-            if s:
-                return cmd, s
-        return self.content_map[command_name][0], None
-
     def get_clusters(self, desired_style):
         """Return a list of clusters where each cluster is an array of strings with a Command/CommandGroup at the end.
 

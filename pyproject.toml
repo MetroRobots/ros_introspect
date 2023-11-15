@@ -4,6 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ros_introspect"
+description = "Pure Python library for working with the files in ROS packages"
 readme = "README.md"
 authors = [
   { name = "David V. Lu!!", email = "davidvlu@gmail.com" },

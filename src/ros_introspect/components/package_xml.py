@@ -178,7 +178,9 @@ class PackageXML(SingularPackageFile):
             pkgs.add(el.childNodes[0].nodeValue)
         return pkgs
 
-    def get_dependencies(self, dependency_type):
+    # The package xml has no implicit dependencies.
+    # This is just to look up what's already in the package
+    def lookup_dependencies(self, dependency_type):
         keys = []
         if dependency_type == DependencyType.BUILD:
             keys.append('build_depend')

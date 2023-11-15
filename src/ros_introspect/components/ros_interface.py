@@ -62,6 +62,7 @@ class ROSInterface(PackageFile):
 
         self.type = full_path.suffix[1:]  # Just the extension, no dot
         self.name = full_path.stem
+        self.fn = full_path.name
         self.sections = [InterfaceSection()]
 
         with open(full_path) as f:
