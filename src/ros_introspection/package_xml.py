@@ -1,20 +1,7 @@
 import collections
 from ros_introspect.components.package_xml import PEOPLE_TAGS
 from ros_introspect.components.package_xml import FORMAT_3_HEADER
-
-
-def replace_package_set(manifest, source_tags, new_tag):
-    """Replace all the elements with tags in source_tags with new elements with new_tag."""
-    intersection = None
-    for tag in source_tags:
-        pkgs = set(manifest.get_packages_by_tag(tag))
-        if intersection is None:
-            intersection = pkgs
-        else:
-            intersection = intersection.intersection(pkgs)
-    for tag in source_tags:
-        manifest.remove_dependencies(tag, intersection)
-    manifest.insert_new_packages(new_tag, intersection)
+from clean_ros.cleaners.package_xml import replace_package_set
 
 
 class PackageXML:
