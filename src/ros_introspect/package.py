@@ -130,9 +130,8 @@ class Package:
         else:
             return 2
 
-    @property
-    def defines_ros_interfaces(self):
-        return self.messages or self.services and self.actions
+    def get_ros_interfaces(self):
+        return self.messages + self.services + self.actions
 
     def add_file(self, package_file):
         subtype = type(package_file)
