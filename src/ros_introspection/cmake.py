@@ -6,12 +6,6 @@ class CMake:
     def __init__(self):
         self.existing_style = get_style(self)
 
-    def get_libraries(self):
-        return list(self.get_source_build_rules('add_library').keys())
-
-    def get_executables(self):
-        return list(self.get_source_build_rules('add_executable').keys())
-
     def get_target_build_rules(self):
         targets = {}
         targets.update(self.get_source_build_rules('add_library'))

@@ -24,6 +24,12 @@ class CMake(PackageFile):
     def attribute_name(cls):
         return 'cmakes'
 
+    def get_libraries(self):
+        return list(self.contents.get_build_rules('add_library').keys())
+
+    def get_executables(self):
+        return list(self.contents.get_build_rules('add_executable').keys())
+
     def get_test_sections(self):
         for command_group in self.contents.content_map['group']:
             if is_testing_group(command_group):
