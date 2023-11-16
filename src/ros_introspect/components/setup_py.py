@@ -133,7 +133,7 @@ def python_to_lines(obj, initial_length=0, indent=4):
 
 def quote_string(s, quote_char="'"):
     """Utility function to wrap an arbitrary string in a quote character"""
-    return quote_char + s + quote_char
+    return quote_char + str(s) + quote_char
 
 
 def unquote_string(s):
@@ -251,7 +251,7 @@ class SetupPy(SingularPackageFile):
                     self.args[keyword.arg] = ast_to_python(keyword.value)
 
     def get_share_path(self, rel_fn=None):
-        if rel_fn == 'resource':
+        if str(rel_fn) == 'resource':
             return "'share/ament_index/resource_index/packages'"
 
         if self.declare_package_name:
@@ -297,7 +297,7 @@ class SetupPy(SingularPackageFile):
 
         for fn in paths:
             if folder:
-                resolved = quote_string(folder + '/' + fn)
+                resolved = quote_string(folder / fn)
             else:
                 resolved = quote_string(fn)
             if resolved not in existing_files:
@@ -307,7 +307,7 @@ class SetupPy(SingularPackageFile):
         # If the new command would span more than 1 line, use a glob operation instead
         if len(python_to_lines(existing_files, 8)) > 1:
             index = [k[0] for k in self.args['data_files']].index(install_folder)
-            self.args['data_files'][index] = (install_folder, "glob('" + folder + "/*')")
+            self.args['data_files'][index] = (install_folder, f"glob('{folder}/*')")
             import_item = ('glob', ['glob'])
             if import_item not in self.imports:
                 self.imports.append(import_item)

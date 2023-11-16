@@ -17,6 +17,10 @@ class SetupCFG(SingularPackageFile):
     def category_name(cls):
         return 'setup.cfg'
 
+    @classmethod
+    def attribute_name(cls):
+        return 'setup_cfg'
+
     def ensure(self, section_name, key, value):
         if not self.config.has_section(section_name):
             self.config.add_section(section_name)
