@@ -29,8 +29,8 @@ class PluginXML(PackageFile):
 
         for el in tree.getElementsByTagName('library'):
             path = el.getAttribute('path')
-            cls = OrderedDict()
-            self.libraries[path] = cls
+            class_d = OrderedDict()
+            self.libraries[path] = class_d
 
             for clstag in el.getElementsByTagName('class'):
                 d = {}
@@ -46,7 +46,7 @@ class PluginXML(PackageFile):
                     desc += str(tag.childNodes[0].nodeValue)
                 d['description'] = desc
 
-                cls[d['type']] = d
+                class_d[d['type']] = d
 
     @classmethod
     def is_type(cls, path):
@@ -62,13 +62,15 @@ class PluginXML(PackageFile):
 
     def contains_library(self, library_name, pkg, name):
         if library_name not in self.libraries and self.package.ros_version == 1:
-            library_name = f'lib{library_name}'
+            library_name = f'lib/lib{library_name}'
         if library_name not in self.libraries:
             return False
         full_name = NS_PATTERN % (pkg, name)
         return full_name in self.libraries[library_name]
 
     def insert_new_class(self, library_name, pkg, name, base_pkg, base_name, description=''):
+        if library_name not in self.libraries and self.package.ros_version == 1:
+            library_name = f'lib/lib{library_name}'
         if library_name not in self.libraries:
             self.libraries[library_name] = OrderedDict()
         library = self.libraries[library_name]
@@ -90,8 +92,8 @@ class PluginXML(PackageFile):
             s += '<class_libraries>\n'
             indent += 2
 
-        for name, lib in self.libraries.items():
-            library_name = 'lib/lib' + name if self.package.ros_version == 1 else name
+        for library_name, lib in self.libraries.items():
+            # library_name = name
             s += ' ' * indent + '<library path="%s">\n' % library_name
             for clib in lib.values():
                 s += self.class_str(clib, indent + 2)
