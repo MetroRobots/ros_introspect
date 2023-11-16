@@ -94,7 +94,7 @@ class Package:
             root = pathlib.Path(root)
         self.root = root
         self.components_by_type = collections.defaultdict(list)
-        self.components_by_name = collections.defaultdict(list)
+        self.components_by_name = {}
 
         # Syntactic sugar to allow for direct attribute access
         for subtype in PackageFile.SUBTYPES:
@@ -137,7 +137,7 @@ class Package:
     def add_file(self, package_file):
         subtype = type(package_file)
         self.components_by_type[subtype].append(package_file)
-        self.components_by_name[package_file.rel_fn].append(package_file)
+        self.components_by_name[package_file.rel_fn] = package_file
 
         if subtype.is_singular():
             attr_name = subtype.attribute_name()
