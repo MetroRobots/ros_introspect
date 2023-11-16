@@ -72,6 +72,10 @@ class SourceCode(PackageFile):
             for tag, pattern in PYTHON_TAGS.items():
                 if self.search_lines_for_pattern(pattern):
                     self.tags.add(tag)
+        elif self.language == 'c++':
+            parts = self.rel_fn.parts
+            if len(parts) > 1 and parts[0] == 'include':
+                self.tags.add('header')
 
     def get_contents(self):
         if self.changed_contents:

@@ -5,7 +5,7 @@ from ..package import PackageFile, package_file
 class Documentation(PackageFile):
     @classmethod
     def is_type(cls, path):
-        if path.suffix in ['.rst', '.md']:
+        if path.suffix in ['.rst', '.md', '.dox']:
             return True
         if 'doc' in path.parts:
             return True

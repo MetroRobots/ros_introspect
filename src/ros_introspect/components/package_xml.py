@@ -271,9 +271,9 @@ class PackageXML(SingularPackageFile):
             self.create_new_tag(tag, pkg)
 
     def add_dependencies(self, dependency_dict, prefer_depend_tag=True):
-        build_depends = dependency_dict[DependencyType.BUILD]
-        run_depends = dependency_dict[DependencyType.RUN]
-        test_depends = dependency_dict[DependencyType.TEST]
+        build_depends = dependency_dict.get(DependencyType.BUILD, set())
+        run_depends = dependency_dict.get(DependencyType.RUN, set())
+        test_depends = dependency_dict.get(DependencyType.TEST, set())
 
         if self.xml_format == 1:
             run_depends.update(build_depends)
