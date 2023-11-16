@@ -355,7 +355,7 @@ class SetupPy(SingularPackageFile):
 def create_setup_py(package):
     if package.setup_py:
         return
-    package.setup_py = SetupPy(package.root / 'setup.py', package)
+    package.add_file(SetupPy(package.root / 'setup.py', package))
 
 
 if __name__ == '__main__':

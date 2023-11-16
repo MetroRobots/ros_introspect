@@ -64,6 +64,8 @@ class SourceCode(PackageFile):
             self.tags.add('test')
 
         if self.language == 'python':
+            if self.full_path.name == INIT_PY:
+                self.tags.add('init.py')
             lib_file = self.full_path.parent / INIT_PY
             if lib_file.exists():
                 self.tags.add('pylib')

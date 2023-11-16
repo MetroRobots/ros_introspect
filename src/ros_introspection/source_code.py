@@ -7,27 +7,6 @@ ALL_CAPS_PATTERN = re.compile(r'^[A-Z]+$')
 
 
 class SourceCode:
-    def has_header_files(self):
-        goal_folder = os.path.join('include', self.pkg_name)
-        for source_fn in self.sources:
-            if goal_folder in source_fn:
-                return True
-        return False
-
-    def get_source_by_language(self, language):
-        return [source for source in self.sources.values() if source.language == language]
-
-    def get_source_by_tags(self, tags, language=None):
-        tagged = []
-        for source in self.sources.values():
-            if language and source.language != language:
-                continue
-            if isinstance(tags, str) and tags not in source.tags:
-                continue
-            if isinstance(tags, set) and len(tags.intersection(source.tags)) < len(tags):
-                continue
-            tagged.append(source)
-        return tagged
 
     def get_build_dependencies(self):
         packages = set()

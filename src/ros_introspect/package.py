@@ -166,6 +166,19 @@ class Package:
                     # TODO: Do not raise if rel_fn matches ALL_CAPS_PATTERN
                     raise RuntimeWarning(f'Cannot find {rel_fn} in package {self.name}')
 
+    def get_source_by_tags(self, tags, language=None):
+        if isinstance(tags, str):
+            tags = set([tags])
+
+        tagged = []
+        for source_file in self.source_code:
+            if language and source_file.language != language:
+                continue
+            if len(tags.intersection(source_file.tags)) < len(tags):
+                continue
+            tagged.append(source_file)
+        return tagged
+
     def save(self):
         for component in self:
             component.save()
