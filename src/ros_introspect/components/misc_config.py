@@ -3,6 +3,7 @@ from ..package import PackageFile, package_file
 MISC_CONFIGS = {
     '.travis.yml',
     '.pre-commit-config.yaml',
+    'bitbucket-pipelines.yml',
 }
 
 
