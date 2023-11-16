@@ -3,6 +3,7 @@ from .ros_resources import ROSResources
 from .components.package_xml import PackageXML
 from .components.cmake import CMake
 from .components.ros_interface import ROSMsg, ROSSrv, ROSAction
+from .components.dynamic_reconfig import DynamicReconfig
 from .components.plugin_xml import PluginXML
 from .components.launch import LaunchXML, LaunchPy
 from .components.setup_py import SetupPy
@@ -16,6 +17,6 @@ from .components.misc_config import MiscConfig
 from .components.source_code import SourceCode
 
 __all__ = ['find_packages', 'Package', 'ROSResources', 'PackageXML', 'CMake',
-           'ROSMsg', 'ROSSrv', 'ROSAction', 'PluginXML', 'LaunchXML', 'LaunchPy',
+           'ROSMsg', 'ROSSrv', 'ROSAction', 'DynamicReconfig', 'PluginXML', 'LaunchXML', 'LaunchPy',
            'SetupPy', 'SetupCFG', 'RVizConfig', 'UrdfFile', 'Documentation',
            'MiscConfig', 'SourceCode']

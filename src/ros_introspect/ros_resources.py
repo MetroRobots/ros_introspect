@@ -1,19 +1,23 @@
 from betsy_ros import get_package_names, list_interfaces
 
 
+def match_package_and_name(interfaces, pkg, name):
+    for interface in interfaces:
+        if interface.package == pkg and interface.name == name:
+            return interface
+
+
 class ROSResources(object):
     """Package wrapping the names of ROS resources to avoid ROS dependencies"""
-
-    def __init__(self):
-        self.packages = set()
-        self.messages = set()
-        self.services = set()
-        self.actions = set()
 
     # Singleton
     def __new__(cls):
         if not hasattr(cls, 'instance'):
             cls.instance = super().__new__(cls)
+            cls.instance.packages = set()
+            cls.instance.messages = set()
+            cls.instance.services = set()
+            cls.instance.actions = set()
         return cls.instance
 
     def load_from_ros(self):
@@ -30,10 +34,10 @@ class ROSResources(object):
         return pkg in self.packages
 
     def is_message(self, pkg, msg):
-        return (pkg, msg) in self.messages
+        return match_package_and_name(self.messages, pkg, msg)
 
     def is_service(self, pkg, srv):
-        return (pkg, srv) in self.services
+        return match_package_and_name(self.services, pkg, srv)
 
     def is_action(self, pkg, action):
-        return (pkg, action) in self.actions
+        return match_package_and_name(self.actions, pkg, action)

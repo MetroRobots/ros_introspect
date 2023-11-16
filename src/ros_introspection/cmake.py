@@ -6,12 +6,6 @@ class CMake:
     def __init__(self):
         self.existing_style = get_style(self)
 
-    def get_target_build_rules(self):
-        targets = {}
-        targets.update(self.get_source_build_rules('add_library'))
-        targets.update(self.get_source_build_rules('add_executable'))
-        return targets
-
     def get_test_section(self, create_if_needed=False):
         sections = self.get_test_sections()
         if len(sections) > 0:
