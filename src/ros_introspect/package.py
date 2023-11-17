@@ -99,6 +99,7 @@ class Package:
         # Syntactic sugar to allow for direct attribute access
         for subtype in PackageFile.SUBTYPES:
             attr_name = subtype.attribute_name()
+            # print(attr_name)
             if subtype.is_singular():
                 setattr(self, attr_name, None)
             else:
@@ -164,7 +165,7 @@ class Package:
                 else:
                     # TODO: Do not raise if rel_fn[0] == '$'
                     # TODO: Do not raise if rel_fn matches ALL_CAPS_PATTERN
-                    raise RuntimeWarning(f'Cannot find {rel_fn} in package {self.name}')
+                    print(f'Cannot find {rel_fn} in package {self.name}')
 
     def get_source_by_tags(self, tags, language=None):
         if isinstance(tags, str):
