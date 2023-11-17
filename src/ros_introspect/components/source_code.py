@@ -48,7 +48,7 @@ class SourceCode(PackageFile):
     def __init__(self, full_path, package):
         super().__init__(full_path, package)
         self.changed_contents = None
-        self.resources = ROSResources()  # Singleton
+        self.resources = ROSResources.get()
 
         self.lines = list(map(str.strip, self.get_contents().split('\n')))
         if self.full_path.suffix in CPP_EXTS:

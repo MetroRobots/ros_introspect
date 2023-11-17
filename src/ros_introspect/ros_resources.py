@@ -20,6 +20,10 @@ class ROSResources(object):
             cls.instance.actions = set()
         return cls.instance
 
+    @classmethod
+    def get(cls):
+        return cls()
+
     def load_from_ros(self):
         self.packages |= get_package_names()
         for interface in list_interfaces():
