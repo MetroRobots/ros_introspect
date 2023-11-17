@@ -1,19 +1,8 @@
-from ros_introspect.components.package_xml import PEOPLE_TAGS
 from ros_introspect.components.package_xml import FORMAT_3_HEADER
 from clean_ros.cleaners.package_xml import replace_package_set
 
 
 class PackageXML:
-    def update_people(self, target_name, target_email=None, search_name=None, search_email=None):
-        for el in self.get_elements_by_tags(PEOPLE_TAGS):
-            name = el.childNodes[0].nodeValue
-            email = el.getAttribute('email') if el.hasAttribute('email') else ''
-            if (search_name is None or name == search_name) and (search_email is None or email == search_email):
-                el.childNodes[0].nodeValue = target_name
-                if target_email:
-                    el.setAttribute('email', target_email)
-                self.changed = True
-
     def set_license(self, license_str):
         el = self.get_license_element()
         if license != el.childNodes[0].nodeValue:
