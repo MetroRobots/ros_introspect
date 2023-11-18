@@ -2,7 +2,7 @@ from ..package import PackageFile, package_file, DependencyType
 import re
 
 AT_LEAST_THREE_DASHES = re.compile(r'^\-{3,}\r?$')
-FIELD_LINE = re.compile(r'([\w_/]+)(\[\d*\])?\s+([\w_]+)\s*?(=.*)?(\s*\#.*)?$', re.DOTALL)
+FIELD_LINE = re.compile(r'\s*([\w_/]+)(\[\d*\])?\s+([\w_]+)\s*?(=.*)?(\s*\#.*)?$', re.DOTALL)
 PRIMITIVES = ['bool', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64',
               'float32', 'float64', 'string', 'time', 'duration']
 

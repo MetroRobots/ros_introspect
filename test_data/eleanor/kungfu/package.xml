@@ -5,5 +5,5 @@
 	<description/>
 	<maintainer email="davidvlu@gmail.com">David V. Lu!!</maintainer>
 	<license>BSD 3-clause</license>
-	<buildtool_depend>catkin</buildtool_depend>
+	<buildtool_depend>ament_cmake</buildtool_depend>
 </package>

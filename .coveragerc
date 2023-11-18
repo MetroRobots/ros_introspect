@@ -1,0 +1,4 @@
+[report]
+omit =
+    *_version.py
+    src/ros_introspect/components/*py

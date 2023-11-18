@@ -1,5 +1,5 @@
 from ros_introspect import find_packages, Package
-from ros_introspect.package import PackageFile
+from ros_introspect.package import PackageFile, DependencyType
 from test_finder import TEST_DATA_FOLDER, THIS_FILE
 import pytest
 import pathlib
@@ -16,6 +16,7 @@ def test_find_packages():
 def test_waymond():
     pkg = Package(TEST_DATA_FOLDER / 'waymond')
     manifest = pkg.package_xml
+    assert pkg.ros_version == 1
     assert pkg.name == 'waymond'
     assert manifest.name == 'waymond'
     assert manifest.xml_format == 1
@@ -32,6 +33,7 @@ def test_waymond():
 def test_kungfu():
     pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'kungfu')
     manifest = pkg.package_xml
+    assert pkg.ros_version == 2
     assert pkg.name == 'kungfu'
     assert manifest.name == 'kungfu'
     assert manifest.xml_format == 2
@@ -47,15 +49,20 @@ def test_kungfu():
     assert original == s
     temp.close()
 
+    assert pathlib.Path('test_file.yaml') in pkg.components_by_name
+    assert pathlib.Path('ignore_file.yaml~') not in pkg.components_by_name
+
 
 def test_meta():
     pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'eeaao')
+    assert pkg.ros_version == 1
     assert pkg.is_metapackage
 
 
 def test_bad_case():
     pkg = Package(TEST_DATA_FOLDER / 'jobu' / 'kpop')
     manifest = pkg.package_xml
+    assert pkg.ros_version == 1
     assert pkg.name is None
     assert manifest.name is None
     assert manifest.xml_format == 1
@@ -89,12 +96,15 @@ def test_bad_component():
 
 def test_all_components():
     folder = TEST_DATA_FOLDER / 'waymond'
-    pkg = Package(folder)
+    pkg = Package(str(folder))
     for subtype in PackageFile.SUBTYPES:
         # Make sure there are no errors raised
         print(subtype.category_name())
         assert subtype.is_type(THIS_FILE) is not None
+        assert subtype.needs_share_installation() in [True, False]
         with tempfile.NamedTemporaryFile(mode='w', prefix=str(folder) + '/') as temp:
             p = pathlib.Path(temp.name)
             st = subtype(p, pkg)
-            st.write(pathlib.Path(temp.name))
+            st.changed = True
+            st.save()
+            assert isinstance(st.get_dependencies(DependencyType.BUILD), set)
