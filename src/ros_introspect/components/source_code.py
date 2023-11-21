@@ -126,6 +126,9 @@ class SourceCode(PackageFile):
         if dependency_type == DependencyType.TEST and 'test' not in self.tags:
             return deps
 
+        if self.language == 'python' and 'test' in self.tags and self.package.ros_version == 2:
+            deps.add('ament_cmake_pytest')
+
         for pkg in self.get_import_packages():
             if self.resources.is_package(pkg):
                 deps.add(pkg)

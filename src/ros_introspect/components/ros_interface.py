@@ -132,5 +132,6 @@ class ROSAction(ROSInterface):
 
     def get_dependencies(self, dependency_type):
         deps = super().get_dependencies(dependency_type)
-        deps.add('actionlib_msgs')
+        if dependency_type == DependencyType.BUILD:
+            deps.add('actionlib_msgs')
         return deps

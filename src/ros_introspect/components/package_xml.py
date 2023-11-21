@@ -47,20 +47,20 @@ def get_ordering_index(name, whiny=True, manifest_version=None):
     return len(ordering)
 
 
-def get_sort_key(node, alphabetize_depends=True):
+def get_sort_key(node, alphabetize_depends=True, manifest_version=None):
     if node:
         name = node.nodeName
     else:
         name = None
 
-    index = get_ordering_index(name)
+    index = get_ordering_index(name, manifest_version=manifest_version)
 
     if not alphabetize_depends:
         return index
     if name and 'depend' in name:
         return index, node.firstChild.data
     else:
-        return index, None
+        return index, ''
 
 
 def get_chunks(children):
@@ -270,25 +270,22 @@ class PackageXML(SingularPackageFile):
         for pkg in sorted(values):
             self.create_new_tag(tag, pkg)
 
-    def add_dependencies(self, dependency_dict, prefer_depend_tag=True):
-        build_depends = dependency_dict.get(DependencyType.BUILD, set())
-        run_depends = dependency_dict.get(DependencyType.RUN, set())
-        test_depends = dependency_dict.get(DependencyType.TEST, set())
+    def add_dependencies(self, dependency_dict, prefer_depend_tag=False):
+        build_depends_to_add = dependency_dict.get(DependencyType.BUILD, set())
+        run_depends_to_add = dependency_dict.get(DependencyType.RUN, set())
+        test_depends_to_add = dependency_dict.get(DependencyType.TEST, set())
 
         if self.xml_format == 1:
-            run_depends.update(build_depends)
+            run_depends_to_add.update(build_depends_to_add)
 
-        existing_build = self.get_dependencies(DependencyType.BUILD)
-        existing_run = self.get_dependencies(DependencyType.RUN)
-        build_depends = build_depends - existing_build
-        run_depends = run_depends - existing_run
+        existing_build = self.lookup_dependencies(DependencyType.BUILD)
+        existing_run = self.lookup_dependencies(DependencyType.RUN)
 
-        # Todo: Just insert run depend
         if self.xml_format == 1:
-            self.insert_new_packages('build_depend', build_depends)
-            self.insert_new_packages('run_depend', run_depends)
+            self.insert_new_packages('build_depend', build_depends_to_add - existing_build)
+            self.insert_new_packages('run_depend', run_depends_to_add - existing_run)
         elif prefer_depend_tag:
-            depend_tags = build_depends.union(run_depends)
+            depend_tags = build_depends_to_add.union(run_depends_to_add)
 
             # Remove tags that overlap with new depends
             self.remove_dependencies('build_depend', existing_build.intersection(depend_tags))
@@ -297,15 +294,25 @@ class PackageXML(SingularPackageFile):
             # Insert depends
             self.insert_new_packages('depend', depend_tags)
         else:
-            both = build_depends.intersection(run_depends)
-            self.insert_new_packages('depend', both)
+            all_build = build_depends_to_add.union(existing_build)
+            all_run = run_depends_to_add.union(existing_run)
+            both = all_build.intersection(all_run)
+
+            existing_depend = self.get_packages_by_tag('depend')
+            self.insert_new_packages('depend', both - existing_depend)
+
+            self.remove_dependencies('build_depend', existing_build - both)
+            self.remove_dependencies('exec_depend', existing_run - both)
+
+            build_depends = build_depends_to_add - existing_build
+            run_depends = run_depends_to_add - existing_run
+
             self.insert_new_packages('build_depend', build_depends - both)
-            self.insert_new_packages('exec_depend', build_depends - both - existing_run)
             self.insert_new_packages('exec_depend', run_depends - both)
 
-        if test_depends is not None and len(test_depends) > 0:
-            existing_test = self.get_dependencies('test')
-            test_depends = set(test_depends) - existing_build - build_depends - existing_test
+        if test_depends_to_add:
+            existing_test = self.lookup_dependencies('test')
+            test_depends = test_depends_to_add - existing_build - build_depends_to_add - existing_test
             self.insert_new_packages('test_depend', test_depends)
 
     def remove_dependencies(self, name, pkgs):

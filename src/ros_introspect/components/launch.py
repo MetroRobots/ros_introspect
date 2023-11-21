@@ -84,13 +84,14 @@ class LaunchXML(Launch):
 
 PY_NODE_PATTERN = re.compile(r'package=["\']([\w_]+)["\']')
 PY_SHARE_PATTERN = re.compile(r'get_package_share_(path|directory)\(\s*["\']([\w_]+)["\']')
+PY_FIND_PATTERN = re.compile(r'FindPackageShare\(\'(\w+)\'\)')
 
 
 @package_file
 class LaunchPy(Launch):
     def __init__(self, full_path, package):
         super().__init__(full_path, package)
-        self.is_test = False
+        self.is_test = self.rel_fn.parts[0] == 'test'
         self.contents = open(full_path).read()
 
     @classmethod
@@ -113,7 +114,13 @@ class LaunchPy(Launch):
         return sorted(s)
 
     def get_misc_pkgs(self):
-        return set()
+        s = set()
+        for m in PY_FIND_PATTERN.finditer(self.contents):
+            pkg = m.group(1)
+            s.add(pkg)
+        if 'xacro' in self.contents:
+            s.add('xacro')
+        return sorted(s)
 
     def write(self, output_path):
         with open(output_path, 'w') as f:
