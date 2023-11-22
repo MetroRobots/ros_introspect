@@ -180,6 +180,12 @@ class Package:
             tagged.append(source_file)
         return tagged
 
+    def has_changes(self):
+        for component in self:
+            if component.changed:
+                return True
+        return False
+
     def save(self):
         for component in self:
             component.save()
@@ -201,12 +207,11 @@ class Package:
         return s
 
 
-def find_packages(root_folder):
+def find_packages(root_folder=pathlib.Path('.')):
     for package_root in find_package_roots(root_folder):
         yield Package(package_root)
 
 
 def print_packages():
-    current_folder = pathlib.Path('.')
-    for package in find_packages(current_folder):
+    for package in find_packages():
         print(package)
