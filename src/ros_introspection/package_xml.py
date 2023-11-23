@@ -3,12 +3,6 @@ from clean_ros.cleaners.package_xml import replace_package_set
 
 
 class PackageXML:
-    def set_license(self, license_str):
-        el = self.get_license_element()
-        if license != el.childNodes[0].nodeValue:
-            el.childNodes[0].nodeValue = license_str
-            self.changed = True
-
     def upgrade(self, new_format=2, quiet=True):
         if self.xml_format == new_format:
             if not quiet:

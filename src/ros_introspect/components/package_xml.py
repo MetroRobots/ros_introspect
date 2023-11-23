@@ -217,6 +217,16 @@ class PackageXML(SingularPackageFile):
         if el:
             return el.childNodes[0].nodeValue
 
+    def set_license(self, license_str):
+        el = self.get_license_element()
+        if not el:
+            # TODO: Create license element
+            pass
+
+        if license != el.childNodes[0].nodeValue:
+            el.childNodes[0].nodeValue = license_str
+            self.changed = True
+
     def contains_node(self, node_name):
         return bool(self.root.getElementsByTagName(node_name))
 
