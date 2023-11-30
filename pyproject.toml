@@ -29,6 +29,11 @@ classifiers = [
 Homepage = "https://github.com/MetroRobots/ros_introspect"
 "Bug Tracker" = "https://github.com/MetroRobots/ros_introspect/issues"
 
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-cov",
+]
 
 [tool.hatch]
 version.source = "vcs"
