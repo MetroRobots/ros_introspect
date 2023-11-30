@@ -54,7 +54,7 @@ def find_sibling_package_roots(package_folder):
             yield subfolder
 
 
-def walk(root):
+def walk(root, include_hidden=True):
     """Yield the paths of all the "valid" files in a directory, relative to the directory"""
 
     queue = [root]
@@ -68,5 +68,8 @@ def walk(root):
             else:
                 # File
                 if subpath.suffix == '.pyc' or subpath.suffix.endswith('~'):
+                    continue
+                if not include_hidden and subpath.name.startswith('.'):
+                    # Ignore hidden files
                     continue
                 yield subpath.relative_to(root)

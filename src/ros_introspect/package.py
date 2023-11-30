@@ -145,6 +145,17 @@ class Package:
             assert getattr(self, attr_name) is None
             setattr(self, attr_name, package_file)
 
+    def remove_file(self, package_file):
+        subtype = type(package_file)
+        self.components_by_type.remove(package_file)
+        del self.components_by_name[package_file.rel_fn]
+
+        if subtype.is_singular():
+            setattr(self, subtype.attribute_name(), None)
+
+        if package_file == self.cmake:
+            self.cmake = None
+
     def __iter__(self):
         for components in self.components_by_type.values():
             yield from components
