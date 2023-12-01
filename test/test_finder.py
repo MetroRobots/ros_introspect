@@ -1,6 +1,6 @@
 import pathlib
 import pytest
-from ros_introspect.finder import find_package_roots, is_repo_root, find_repo_root, find_sibling_package_roots
+from ros_introspect.finder import find_package_roots, is_repo_root, find_repo_root, find_sibling_package_roots, walk
 
 THIS_FILE = pathlib.Path(__file__)
 ROOT_FOLDER = THIS_FILE.parent.parent
@@ -32,3 +32,9 @@ def test_siblings():
     assert len(e_sibs) == 2
     names = [sib.name for sib in e_sibs]
     assert 'kungfu' in names
+
+
+def test_walk():
+    folder = TEST_DATA_FOLDER / 'eleanor' / 'kungfu'
+    assert len(list(walk(folder))) == 5
+    assert len(list(walk(folder, include_hidden=False))) == 4

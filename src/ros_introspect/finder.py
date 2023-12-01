@@ -61,6 +61,10 @@ def walk(root, include_hidden=True):
     while queue:
         folder = queue.pop(0)
         for subpath in folder.iterdir():
+            if not include_hidden and subpath.name.startswith('.'):
+                # Ignore hidden files and directories
+                continue
+
             if subpath.is_dir():
                 # Folder
                 if not is_repo_marker(subpath):
@@ -68,8 +72,5 @@ def walk(root, include_hidden=True):
             else:
                 # File
                 if subpath.suffix == '.pyc' or subpath.suffix.endswith('~'):
-                    continue
-                if not include_hidden and subpath.name.startswith('.'):
-                    # Ignore hidden files
                     continue
                 yield subpath.relative_to(root)

@@ -1,6 +1,5 @@
 import datetime
 import pathlib
-import re
 import requests
 import yaml
 
@@ -44,11 +43,31 @@ def get_download_data(url, filename, data_formatter=None, cache_age_days=3):
     return data
 
 
+def identifier_split(s, delimiters=' _-'):
+    tokens = []
+    current = ''
+
+    def starts_new_token(c):
+        if c in delimiters:
+            return True
+        return current and current[-1].islower() and c.isupper()
+
+    for c in s:
+        if starts_new_token(c):
+            if current:
+                tokens.append(current)
+            current = ''
+
+        if c not in delimiters:
+            current += c
+    if current:
+        tokens.append(current)
+    return tokens
+
+
 def convert_to_underscore_notation(name):
-    # https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+    return '_'.join(a.lower() for a in identifier_split(name))
 
 
 def convert_to_caps_notation(name):
-    return ''.join([x.title() for x in name.split('_')])
+    return ''.join([x.title() for x in identifier_split(name)])

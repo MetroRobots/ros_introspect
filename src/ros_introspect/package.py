@@ -67,8 +67,17 @@ class SingularPackageFile(PackageFile):
 
 class MiscPackageFile(PackageFile):
     @classmethod
+    def is_type(cls, path):
+        # As a fallback, everything is a MiscPackageFile
+        return True
+
+    @classmethod
     def category_name(cls):
         return 'Other Files'
+
+    @classmethod
+    def attribute_name(cls):
+        return 'misc_files'
 
     @classmethod
     def needs_share_installation(cls):
@@ -97,9 +106,8 @@ class Package:
         self.components_by_name = {}
 
         # Syntactic sugar to allow for direct attribute access
-        for subtype in PackageFile.SUBTYPES:
+        for subtype in PackageFile.SUBTYPES + [MiscPackageFile]:
             attr_name = subtype.attribute_name()
-            # print(attr_name)
             if subtype.is_singular():
                 setattr(self, attr_name, None)
             else:
@@ -147,7 +155,7 @@ class Package:
 
     def remove_file(self, package_file):
         subtype = type(package_file)
-        self.components_by_type.remove(package_file)
+        self.components_by_type[subtype].remove(package_file)
         del self.components_by_name[package_file.rel_fn]
 
         if subtype.is_singular():

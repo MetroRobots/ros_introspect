@@ -1,5 +1,5 @@
 from ros_introspect import find_packages, Package
-from ros_introspect.package import PackageFile, DependencyType
+from ros_introspect.package import PackageFile, MiscPackageFile, DependencyType
 from test_finder import TEST_DATA_FOLDER, THIS_FILE
 import pytest
 import pathlib
@@ -18,6 +18,8 @@ def test_waymond():
     manifest = pkg.package_xml
     assert pkg.ros_version == 1
     assert pkg.name == 'waymond'
+    assert not pkg.has_changes()
+    assert not pkg.get_dependencies(DependencyType.BUILD)
     assert manifest.name == 'waymond'
     assert manifest.xml_format == 1
     assert manifest.std_tab == 2
@@ -28,6 +30,8 @@ def test_waymond():
     people = manifest.get_people()
     assert len(people) == 1
     assert manifest.get_license() == 'BSD 3-clause'
+
+    assert len(pkg.get_ros_interfaces()) == 1
 
 
 def test_kungfu():
@@ -92,12 +96,16 @@ def test_bad_component():
     with pytest.raises(NotImplementedError):
         FakeComponent.is_type('')
     assert FakeComponent.category_name() == 'FakeComponent'
+    assert FakeComponent.attribute_name() == 'fake_component'
+
+    # Keep defaults consistent
+    assert FakeComponent.needs_share_installation() is False
 
 
 def test_all_components():
     folder = TEST_DATA_FOLDER / 'waymond'
     pkg = Package(str(folder))
-    for subtype in PackageFile.SUBTYPES:
+    for subtype in PackageFile.SUBTYPES + [MiscPackageFile]:
         # Make sure there are no errors raised
         print(subtype.category_name())
         assert subtype.is_type(THIS_FILE) is not None
@@ -108,3 +116,12 @@ def test_all_components():
             st.changed = True
             st.save()
             assert isinstance(st.get_dependencies(DependencyType.BUILD), set)
+
+
+def test_editing():
+    pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'hibachi')
+    assert not pkg.has_changes()
+    pkg.remove_file(pkg.cmake)
+    assert len(pkg.components_by_name) == 1
+    pkg.package_xml.set_license('Proprietary')
+    assert pkg.has_changes()

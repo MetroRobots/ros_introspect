@@ -13,6 +13,13 @@ maintainers = [
   { name = "David V. Lu!!", email = "davidvlu@gmail.com" },
 ]
 
+dependencies = [
+  "betsy-ros",
+  "ruamel.yaml",
+  "stylish-cmake-parser",
+  "PyYAML",
+]
+
 requires-python = ">=3.8"
 
 dynamic = ["version"]
@@ -29,6 +36,11 @@ classifiers = [
 Homepage = "https://github.com/MetroRobots/ros_introspect"
 "Bug Tracker" = "https://github.com/MetroRobots/ros_introspect/issues"
 
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-cov",
+]
 
 [tool.hatch]
 version.source = "vcs"
