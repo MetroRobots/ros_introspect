@@ -16,6 +16,7 @@ maintainers = [
 dependencies = [
   "ruamel.yaml",
   "stylish-cmake-parser",
+  "yaml",
 ]
 
 requires-python = ">=3.8"
