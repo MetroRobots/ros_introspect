@@ -123,6 +123,12 @@ class Package:
         self.build_type = self.package_xml.build_type
         self.is_metapackage = self.package_xml.contains_node('metapackage')
 
+        if self.cmakes:
+            self.cmake = self.cmakes[0]
+            self.is_metapackage = self.is_metapackage or self.cmake.is_metapackage
+        else:
+            self.cmake = None
+
     @property
     def ros_version(self):
         if self.build_type == 'catkin':
