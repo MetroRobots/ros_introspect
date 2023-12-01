@@ -15,13 +15,39 @@ def test_find_packages():
 
 def test_waymond():
     pkg = Package(TEST_DATA_FOLDER / 'waymond')
-    assert pkg
+    manifest = pkg.package_xml
+    assert pkg.ros_version == 1
+    assert pkg.name == 'waymond'
+    assert manifest.name == 'waymond'
+    assert manifest.xml_format == 1
+    assert manifest.std_tab == 2
+    assert str(manifest) == 'package.xml'
+
+    pkg.save()
+
+    people = manifest.get_people()
+    assert len(people) == 1
+    assert manifest.get_license() == 'BSD 3-clause'
 
 
 def test_kungfu():
     pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'kungfu')
+    manifest = pkg.package_xml
+    assert pkg.ros_version == 2
     assert pkg.name == 'kungfu'
+    assert manifest.name == 'kungfu'
+    assert manifest.xml_format == 2
+    assert manifest.std_tab == 4
     assert str(pkg) != ''
+
+    # Test Write
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
+        manifest.write(temp.name)
+
+    original = open(manifest.full_path).read()
+    s = open(temp.name).read()
+    assert original == s
+    temp.close()
 
     assert pathlib.Path('test_file.yaml') in pkg.components_by_name
     assert pathlib.Path('ignore_file.yaml~') not in pkg.components_by_name
@@ -29,7 +55,33 @@ def test_kungfu():
 
 def test_meta():
     pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'eeaao')
-    assert pkg
+    assert pkg.ros_version == 1
+    assert pkg.is_metapackage
+
+
+def test_bad_case():
+    pkg = Package(TEST_DATA_FOLDER / 'jobu' / 'kpop')
+    manifest = pkg.package_xml
+    assert pkg.ros_version == 1
+    assert pkg.name is None
+    assert manifest.name is None
+    assert manifest.xml_format == 1
+    assert manifest.std_tab == 0
+    assert manifest.get_license() is None
+
+
+def test_bad_case2():
+    with pytest.raises(RuntimeError) as e_info:
+        Package(TEST_DATA_FOLDER / 'fake_git_root' / 'racacoonie')
+
+    assert 'Unable to determine' in str(e_info)
+
+
+def test_bad_case3():
+    with pytest.raises(RuntimeError) as e_info:
+        Package(TEST_DATA_FOLDER / 'fake_git_root' / 'chad')
+
+    assert 'Too many valid buildtool' in str(e_info)
 
 
 class FakeComponent(PackageFile):
