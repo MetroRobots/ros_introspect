@@ -13,6 +13,10 @@ maintainers = [
   { name = "David V. Lu!!", email = "davidvlu@gmail.com" },
 ]
 
+dependencies = [
+  "stylish-cmake-parser",
+]
+
 requires-python = ">=3.8"
 
 dynamic = ["version"]
