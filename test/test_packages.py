@@ -1,4 +1,4 @@
-from ros_introspect import find_packages, Package
+from ros_introspect import find_packages, Package, ROSResources
 from ros_introspect.package import PackageFile, MiscPackageFile, DependencyType
 from test_finder import TEST_DATA_FOLDER, THIS_FILE
 import pytest
@@ -63,6 +63,18 @@ def test_meta():
     assert pkg.is_metapackage
 
 
+def test_source_code():
+    resources = ROSResources.get()
+    resources.packages.add('rclcpp')
+    resources.packages.add('hibachi')
+
+    pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'hibachi')
+    assert len(pkg.get_source_by_tags('library')) == 1
+    assert len(pkg.get_source_by_tags(set(), language='python')) == 0
+
+    assert pkg.get_dependencies(DependencyType.BUILD)
+
+
 def test_bad_case():
     pkg = Package(TEST_DATA_FOLDER / 'jobu' / 'kpop')
     manifest = pkg.package_xml
@@ -122,8 +134,6 @@ def test_editing():
     pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'hibachi')
     assert len(pkg.components_by_name) == 4
     assert not pkg.has_changes()
-    assert len(pkg.get_source_by_tags('library')) == 1
-    assert len(pkg.get_source_by_tags(set(), language='python')) == 0
 
     pkg.remove_file(pkg.cmake)
     assert len(pkg.components_by_name) == 3
