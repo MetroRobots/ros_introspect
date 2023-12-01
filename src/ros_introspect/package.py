@@ -151,7 +151,7 @@ class Package:
 
     def remove_file(self, package_file):
         subtype = type(package_file)
-        self.components_by_type.remove(package_file)
+        self.components_by_type[subtype].remove(package_file)
         del self.components_by_name[package_file.rel_fn]
 
         if subtype.is_singular():
