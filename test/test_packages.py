@@ -31,6 +31,8 @@ def test_waymond():
     assert len(people) == 1
     assert manifest.get_license() == 'BSD 3-clause'
 
+    assert len(pkg.get_ros_interfaces()) == 1
+
 
 def test_kungfu():
     pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'kungfu')
@@ -114,3 +116,12 @@ def test_all_components():
             st.changed = True
             st.save()
             assert isinstance(st.get_dependencies(DependencyType.BUILD), set)
+
+
+def test_editing():
+    pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'hibachi')
+    assert not pkg.has_changes()
+    pkg.remove_file(pkg.cmake)
+    assert len(pkg.components_by_name) == 1
+    pkg.package_xml.set_license('Proprietary')
+    assert pkg.has_changes()
