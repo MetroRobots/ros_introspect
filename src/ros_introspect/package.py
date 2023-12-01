@@ -129,6 +129,10 @@ class Package:
         else:
             self.cmake = None
 
+        # Update cross-file properties
+        if self.cmake and self.source_code:
+            self.setup_source_tags()
+
     @property
     def ros_version(self):
         if self.build_type == 'catkin':
@@ -171,6 +175,27 @@ class Package:
         if self.name in deps:
             deps.remove(self.name)
         return deps
+
+    def setup_source_tags(self):
+        for tag, files in self.cmake.get_source_tags().items():
+            for rel_fn in files:
+                if rel_fn in self.components_by_name:
+                    self.components_by_name[rel_fn].tags.add(tag)
+                else:
+                    print(f'Cannot find {rel_fn} in package {self.name}')
+
+    def get_source_by_tags(self, tags, language=None):
+        if isinstance(tags, str):
+            tags = set([tags])
+
+        tagged = []
+        for source_file in self.source_code:
+            if language and source_file.language != language:
+                continue
+            if len(tags.intersection(source_file.tags)) < len(tags):
+                continue
+            tagged.append(source_file)
+        return tagged
 
     def has_changes(self):
         for component in self:

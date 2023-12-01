@@ -1,4 +1,5 @@
 from .package import find_packages, Package
+from .ros_resources import ROSResources
 from .components.package_xml import PackageXML
 from .components.cmake import CMake
 from .components.ros_interface import ROSMsg, ROSSrv, ROSAction
@@ -13,7 +14,10 @@ from .components.urdf import UrdfFile
 from .components.documentation import Documentation
 from .components.misc_config import MiscConfig
 
-__all__ = ['find_packages', 'Package', 'PackageXML', 'CMake',
+# NB: Source code goes last to ensure that setup.py and launch.py are handled first
+from .components.source_code import SourceCode
+
+__all__ = ['find_packages', 'Package', 'ROSResources', 'PackageXML', 'CMake',
            'ROSMsg', 'ROSSrv', 'ROSAction', 'DynamicReconfig', 'PluginXML', 'LaunchXML', 'LaunchPy',
            'ParamConfig', 'SetupPy', 'SetupCFG', 'RVizConfig', 'UrdfFile', 'Documentation',
-           'MiscConfig']
+           'MiscConfig', 'SourceCode']
