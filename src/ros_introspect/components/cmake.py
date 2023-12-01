@@ -16,7 +16,7 @@ class CMake(PackageFile, CommandSequence):
         CommandSequence.__init__(self)
 
         for content in parse_file(self.full_path):
-            self.add(content)
+            self.append(content)
 
         self.is_metapackage = len(self.content_map['catkin_metapackage']) > 0
 

@@ -179,8 +179,9 @@ class Package:
     def setup_source_tags(self):
         for tag, files in self.cmake.get_source_tags().items():
             for rel_fn in files:
-                if rel_fn in self.components_by_name:
-                    self.components_by_name[rel_fn].tags.add(tag)
+                rel_path = pathlib.Path(rel_fn)
+                if rel_path in self.components_by_name:
+                    self.components_by_name[rel_path].tags.add(tag)
                 else:
                     # TODO: Do not raise if rel_fn[0] == '$'
                     # TODO: Do not raise if rel_fn matches ALL_CAPS_PATTERN
@@ -229,8 +230,3 @@ class Package:
 def find_packages(root_folder=pathlib.Path('.')):
     for package_root in find_package_roots(root_folder):
         yield Package(package_root)
-
-
-def print_packages():
-    for package in find_packages():
-        print(package)

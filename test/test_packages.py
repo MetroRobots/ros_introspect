@@ -120,8 +120,14 @@ def test_all_components():
 
 def test_editing():
     pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'hibachi')
+    assert len(pkg.components_by_name) == 4
     assert not pkg.has_changes()
+    assert len(pkg.get_source_by_tags('library')) == 1
+    assert len(pkg.get_source_by_tags(set(), language='python')) == 0
+
     pkg.remove_file(pkg.cmake)
-    assert len(pkg.components_by_name) == 1
+    assert len(pkg.components_by_name) == 3
     pkg.package_xml.set_license('Proprietary')
     assert pkg.has_changes()
+
+    pkg.remove_file(pkg.package_xml)
