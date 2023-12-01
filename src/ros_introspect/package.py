@@ -106,9 +106,8 @@ class Package:
         self.components_by_name = {}
 
         # Syntactic sugar to allow for direct attribute access
-        for subtype in PackageFile.SUBTYPES:
+        for subtype in PackageFile.SUBTYPES + [MiscPackageFile]:
             attr_name = subtype.attribute_name()
-            # print(attr_name)
             if subtype.is_singular():
                 setattr(self, attr_name, None)
             else:
@@ -118,8 +117,18 @@ class Package:
         for subpath in walk(root):
             self.add_file(infer_package_file(root / subpath, self))
 
-        # Temporary name resolution
-        self.name = self.root.name
+        # Get Key Properties from Manifest
+        assert self.package_xml
+        self.name = self.package_xml.name
+        self.build_type = self.package_xml.build_type
+        self.is_metapackage = self.package_xml.contains_node('metapackage')
+
+    @property
+    def ros_version(self):
+        if self.build_type == 'catkin':
+            return 1
+        else:
+            return 2
 
     def add_file(self, package_file):
         subtype = type(package_file)
@@ -165,7 +174,7 @@ class Package:
             component.save()
 
     def __repr__(self):
-        s = '== {} ==\n'.format(self.name)
+        s = '== {} ({})==\n'.format(self.name, self.build_type)
         for subtype in PackageFile.SUBTYPES + [MiscPackageFile]:
             if not self.components_by_type[subtype]:
                 continue
