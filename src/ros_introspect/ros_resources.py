@@ -27,12 +27,15 @@ class ROSResources(object):
     def load_from_ros(self):
         self.packages |= get_package_names()
         for interface in list_interfaces():
-            if interface.type == 'msg':
-                self.messages.add(interface)
-            elif interface.type == 'srv':
-                self.services.add(interface)
-            else:
-                self.actions.add(interface)
+            self.add_interface(interface)
+
+    def add_interface(self, interface):
+        if interface.type == 'msg':
+            self.messages.add(interface)
+        elif interface.type == 'srv':
+            self.services.add(interface)
+        else:
+            self.actions.add(interface)
 
     def is_package(self, pkg):
         return pkg in self.packages

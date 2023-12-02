@@ -19,7 +19,7 @@ def test_waymond():
     assert pkg.ros_version == 1
     assert pkg.name == 'waymond'
     assert not pkg.has_changes()
-    assert not pkg.get_dependencies(DependencyType.BUILD)
+    assert len(pkg.get_dependencies(DependencyType.BUILD)) == 1
     assert manifest.name == 'waymond'
     assert manifest.xml_format == 1
     assert manifest.std_tab == 2
@@ -31,7 +31,16 @@ def test_waymond():
     assert len(people) == 1
     assert manifest.get_license() == 'BSD 3-clause'
 
-    assert len(pkg.get_ros_interfaces()) == 1
+    assert len(pkg.get_ros_interfaces()) == 4
+
+    resources = ROSResources.get()
+    assert resources.is_package('waymond')
+    assert resources.is_message('waymond', 'FannyPack')
+    assert not resources.is_service('waymond', 'FannyPack')
+    assert resources.is_service('waymond', 'BeKind')
+    assert not resources.is_service('waymond', 'Laundry')
+    assert resources.is_action('waymond', 'Laundry')
+    assert resources.is_action('waymond', 'Taxes')
 
 
 def test_kungfu():
@@ -66,7 +75,6 @@ def test_meta():
 def test_source_code():
     resources = ROSResources.get()
     resources.packages.add('rclcpp')
-    resources.packages.add('hibachi')
 
     pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'hibachi')
     assert len(pkg.get_source_by_tags('library')) == 1

@@ -3,7 +3,10 @@ from enum import IntEnum
 import pathlib
 import shutil
 
+from betsy_ros import ROSInterface
+
 from .finder import find_package_roots, walk
+from .ros_resources import ROSResources
 from .util import convert_to_underscore_notation
 
 DependencyType = IntEnum('DependencyType', ['BUILD', 'RUN', 'TEST'])
@@ -132,6 +135,13 @@ class Package:
         # Update cross-file properties
         if self.cmake and self.source_code:
             self.setup_source_tags()
+
+        # Need Package name to be defined before we update resources
+        resources = ROSResources.get()
+        resources.packages.add(self.name)
+        for interface in self.get_ros_interfaces():
+            ros_name = ROSInterface(self.name, interface.type, interface.name)
+            resources.add_interface(ros_name)
 
     @property
     def ros_version(self):

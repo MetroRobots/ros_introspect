@@ -1,4 +1,5 @@
 from ..package import PackageFile, package_file
+from .misc_config import MiscConfig
 import ruamel.yaml
 
 ruamel_yaml = ruamel.yaml.YAML()
@@ -12,7 +13,7 @@ class ParamConfig(PackageFile):
 
     @classmethod
     def is_type(cls, path):
-        return path.suffix == '.yaml'
+        return path.suffix == '.yaml' and not MiscConfig.is_type(path)
 
     @classmethod
     def needs_share_installation(cls):
