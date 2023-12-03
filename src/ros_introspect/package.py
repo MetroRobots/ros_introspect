@@ -3,7 +3,10 @@ from enum import IntEnum
 import pathlib
 import shutil
 
+from betsy_ros import ROSInterface
+
 from .finder import find_package_roots, walk
+from .ros_resources import ROSResources
 from .util import convert_to_underscore_notation
 
 DependencyType = IntEnum('DependencyType', ['BUILD', 'RUN', 'TEST'])
@@ -129,6 +132,17 @@ class Package:
         else:
             self.cmake = None
 
+        # Update cross-file properties
+        if self.cmake and self.source_code:
+            self.setup_source_tags()
+
+        # Need Package name to be defined before we update resources
+        resources = ROSResources.get()
+        resources.packages.add(self.name)
+        for interface in self.get_ros_interfaces():
+            ros_name = ROSInterface(self.name, interface.type, interface.name)
+            resources.add_interface(ros_name)
+
     @property
     def ros_version(self):
         if self.build_type == 'catkin':
@@ -172,6 +186,28 @@ class Package:
             deps.remove(self.name)
         return deps
 
+    def setup_source_tags(self):
+        for tag, files in self.cmake.get_source_tags().items():
+            for rel_fn in files:
+                rel_path = pathlib.Path(rel_fn)
+                if rel_path in self.components_by_name:
+                    self.components_by_name[rel_path].tags.add(tag)
+                else:
+                    print(f'Cannot find {rel_fn} in package {self.name}')
+
+    def get_source_by_tags(self, tags, language=None):
+        if isinstance(tags, str):
+            tags = set([tags])
+
+        tagged = []
+        for source_file in self.source_code:
+            if language and source_file.language != language:
+                continue
+            if len(tags.intersection(source_file.tags)) < len(tags):
+                continue
+            tagged.append(source_file)
+        return tagged
+
     def has_changes(self):
         for component in self:
             if component.changed:
@@ -202,8 +238,3 @@ class Package:
 def find_packages(root_folder=pathlib.Path('.')):
     for package_root in find_package_roots(root_folder):
         yield Package(package_root)
-
-
-def print_packages():
-    for package in find_packages():
-        print(package)
