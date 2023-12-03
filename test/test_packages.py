@@ -1,4 +1,4 @@
-from ros_introspect import find_packages, Package
+from ros_introspect import find_packages, Package, ROSResources
 from ros_introspect.package import PackageFile, MiscPackageFile, DependencyType
 from test_finder import TEST_DATA_FOLDER, THIS_FILE
 import pytest
@@ -19,7 +19,7 @@ def test_waymond():
     assert pkg.ros_version == 1
     assert pkg.name == 'waymond'
     assert not pkg.has_changes()
-    assert not pkg.get_dependencies(DependencyType.BUILD)
+    assert len(pkg.get_dependencies(DependencyType.BUILD)) == 1
     assert manifest.name == 'waymond'
     assert manifest.xml_format == 1
     assert manifest.std_tab == 2
@@ -31,7 +31,16 @@ def test_waymond():
     assert len(people) == 1
     assert manifest.get_license() == 'BSD 3-clause'
 
-    assert len(pkg.get_ros_interfaces()) == 1
+    assert len(pkg.get_ros_interfaces()) == 4
+
+    resources = ROSResources.get()
+    assert resources.is_package('waymond')
+    assert resources.is_message('waymond', 'FannyPack')
+    assert not resources.is_service('waymond', 'FannyPack')
+    assert resources.is_service('waymond', 'BeKind')
+    assert not resources.is_service('waymond', 'Laundry')
+    assert resources.is_action('waymond', 'Laundry')
+    assert resources.is_action('waymond', 'Taxes')
 
 
 def test_kungfu():
@@ -61,6 +70,17 @@ def test_meta():
     pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'eeaao')
     assert pkg.ros_version == 1
     assert pkg.is_metapackage
+
+
+def test_source_code():
+    resources = ROSResources.get()
+    resources.packages.add('rclcpp')
+
+    pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'hibachi')
+    assert len(pkg.get_source_by_tags('library')) == 1
+    assert len(pkg.get_source_by_tags(set(), language='python')) == 0
+
+    assert pkg.get_dependencies(DependencyType.BUILD)
 
 
 def test_bad_case():
@@ -120,8 +140,12 @@ def test_all_components():
 
 def test_editing():
     pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'hibachi')
+    assert len(pkg.components_by_name) == 4
     assert not pkg.has_changes()
+
     pkg.remove_file(pkg.cmake)
-    assert len(pkg.components_by_name) == 1
+    assert len(pkg.components_by_name) == 3
     pkg.package_xml.set_license('Proprietary')
     assert pkg.has_changes()
+
+    pkg.remove_file(pkg.package_xml)
