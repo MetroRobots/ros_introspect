@@ -27,7 +27,3 @@ class UrdfFile(PackageFile):
             for match in pattern.findall(self.contents):
                 deps.add(match)
         return deps
-
-    def write(self, output_path):
-        with open(output_path, 'w') as f:
-            f.write(self.contents)

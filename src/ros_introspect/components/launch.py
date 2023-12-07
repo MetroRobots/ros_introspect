@@ -28,14 +28,10 @@ class Launch(PackageFile):
 class LaunchXML(Launch):
     def __init__(self, full_path, package):
         super().__init__(full_path, package)
-        if not full_path.exists():
-            self.tree = parse_xml('<launch />')
-            self.is_test = False
-            return
         try:
             self.tree = parse_xml_file(open(full_path))
             self.is_test = len(self.tree.getElementsByTagName('test')) > 0
-        except ExpatError:  # this is an invalid xml file
+        except (ExpatError, FileNotFoundError):  # pragma: no cover (invalid/nonexistent launch xml)
             self.tree = parse_xml('<launch />')
             self.is_test = False
 
