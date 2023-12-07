@@ -2,27 +2,38 @@ from ..package import PackageFile, package_file, DependencyType
 import re
 
 AT_LEAST_THREE_DASHES = re.compile(r'^\-{3,}\r?$')
-FIELD_LINE = re.compile(r'\s*([\w_/]+)(\[\d*\])?\s+([\w_]+)\s*?(=.*)?(\s*\#.*)?$', re.DOTALL)
+FIELD_LINE = re.compile(r'\s*'  # Leading Whitespace
+                        r'([\w_/]+|string<=\d+)'  # Package/primitive name (or funky string def)
+                        r'(\[<?=?\d*\])?'  # Optional array size
+                        r'\s+'  # Some whitespace
+                        r'([\w_]+)'  # Field name
+                        r'\s*?'  # Optional whitespace
+                        r'(?:(=|\s)\s*([^\s\#][^\#]*))?'  # Optional equals sign and default/constant value
+                        r'(\s*\#.*)?$', re.DOTALL)  # Trailing whitespace and comment
 PRIMITIVES = ['bool', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64',
               'float32', 'float64', 'string', 'time', 'duration']
 
 
 class InterfaceField:
-    def __init__(self, field_type, is_array, name, value):
+    def __init__(self, field_type, array_def, name, constant_value=None, default_value=None):
         self.type = field_type
-        self.is_array = is_array
+        self.array_def = array_def
         self.name = name
-        self.value = value
+        self.constant_value = constant_value
+        self.default_value = default_value
 
     def __repr__(self):
         s = self.type
-        if self.is_array:
-            s += '[]'
+        if self.array_def:
+            s += self.array_def
         s += ' '
         s += self.name
-        if self.value:
+        if self.constant_value is not None:
             s += '='
-            s += self.value
+            s += self.constant_value
+        if self.default_value is not None:
+            s += ' '
+            s += self.default_value
         return s
 
 
@@ -41,8 +52,13 @@ class InterfaceSection:
             return
         m = FIELD_LINE.match(line)
         if m:
-            field_type, is_array, name, value, comment = m.groups()
-            field = InterfaceField(field_type, is_array, name, value)
+            field_type, array_def, name, maybe_equals, value, comment = m.groups()
+            if maybe_equals == '=':
+                field = InterfaceField(field_type, array_def, name, constant_value=value)
+            elif maybe_equals == ' ':
+                field = InterfaceField(field_type, array_def, name, default_value=value)
+            else:
+                field = InterfaceField(field_type, array_def, name)
             self.contents.append(field)
             self.fields.append(field)
             if comment:
@@ -50,7 +66,7 @@ class InterfaceSection:
             else:
                 self.contents.append('\n')
         else:
-            raise Exception('Unable to parse interface line: ' + repr(line))
+            raise Exception('Unable to parse interface line: ' + repr(line))  # pragma: no cover
 
     def __repr__(self):
         return ''.join(map(str, self.contents))
@@ -99,9 +115,6 @@ class ROSInterface(PackageFile):
     def write(self, output_path):
         with open(output_path, 'w') as f:
             f.write(self.output())
-
-    def __repr__(self):
-        return self.name
 
 
 @package_file
