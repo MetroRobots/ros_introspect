@@ -1,14 +1,14 @@
 from ..package import PackageFile, package_file, DependencyType
-import yaml
-import ruamel.yaml  # For custom yaml dumping
+import ruamel.yaml
 
 
-my_yaml_writer = ruamel.yaml.YAML()
-my_yaml_writer.indent(mapping=2, sequence=4, offset=2)
-my_yaml_writer.representer.add_representer(type(None),
-                                           lambda self, data:
-                                           self.represent_scalar('tag:yaml.org,2002:null', '~')
-                                           )
+rviz_yaml = ruamel.yaml.YAML()
+rviz_yaml.indent(mapping=2, sequence=4, offset=2)
+rviz_yaml.width = 4096
+rviz_yaml.representer.add_representer(type(None),
+                                      lambda self, data:
+                                      self.represent_scalar('tag:yaml.org,2002:null', '~')
+                                      )
 
 
 def get_class_dicts(entry):
@@ -45,7 +45,7 @@ def dictionary_subtract(alpha, beta):
 class RVizConfig(PackageFile):
     def __init__(self, full_path, package):
         super().__init__(full_path, package)
-        self.contents = yaml.safe_load(open(full_path))
+        self.contents = rviz_yaml.load(open(full_path))
 
     @classmethod
     def is_type(cls, path):
@@ -73,4 +73,4 @@ class RVizConfig(PackageFile):
 
     def write(self, output_path):
         with open(output_path, 'w') as f:
-            my_yaml_writer.dump(self.contents, f, transform=lambda s: s.replace(": ''\n", ': ""\n'))
+            rviz_yaml.dump(self.contents, f, transform=lambda s: s.replace(": ''\n", ': ""\n'))
