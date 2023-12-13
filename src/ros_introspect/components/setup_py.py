@@ -314,9 +314,9 @@ class SetupPy(SingularPackageFile):
 
     def write(self, output_path):
         with open(output_path, 'w') as f:
-            f.write(str(self))
+            f.write(self.generate_contents())
 
-    def __repr__(self):
+    def generate_contents(self):
         s = ''
 
         if self.hash_bang:
