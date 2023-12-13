@@ -304,6 +304,7 @@ class PackageXML(SingularPackageFile):
             # Insert depends
             self.insert_new_packages('depend', depend_tags)
         else:
+            # Only insert depend tag when present in BOTH build and run
             all_build = build_depends_to_add.union(existing_build)
             all_run = run_depends_to_add.union(existing_run)
             both = all_build.intersection(all_run)
@@ -311,12 +312,13 @@ class PackageXML(SingularPackageFile):
             existing_depend = self.get_packages_by_tag('depend')
             self.insert_new_packages('depend', both - existing_depend)
 
-            self.remove_dependencies('build_depend', existing_build - both)
-            self.remove_dependencies('exec_depend', existing_run - both)
+            # Remove tags that were converted to depend tags
+            self.remove_dependencies('build_depend', existing_build.intersection(both))
+            self.remove_dependencies('exec_depend', existing_run.intersection(both))
 
+            # Insert new tags
             build_depends = build_depends_to_add - existing_build
             run_depends = run_depends_to_add - existing_run
-
             self.insert_new_packages('build_depend', build_depends - both)
             self.insert_new_packages('exec_depend', run_depends - both)
 
