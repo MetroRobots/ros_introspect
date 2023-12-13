@@ -48,6 +48,7 @@ class PackageFile:
         if not self.changed:
             return
         self.write(self.full_path)
+        self.changed = False
 
     def write(self, output_path):
         # By default, write with no modifications
