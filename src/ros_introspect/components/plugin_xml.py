@@ -1,6 +1,6 @@
 from ..package import PackageFile, package_file
 from collections import OrderedDict
-from xml.dom.minidom import parse as parse_xml_file
+from xml.dom.minidom import parseString as parse_xml
 from xml.parsers.expat import ExpatError
 
 NS_PATTERN = '%s::%s'
@@ -18,10 +18,13 @@ class PluginXML(PackageFile):
 
         if self.full_path.exists():
             self.read()
+        else:
+            self.contents = None
 
     def read(self):
+        self.contents = open(self.full_path).read()
         try:
-            tree = parse_xml_file(open(self.full_path))
+            tree = parse_xml(self.contents)
         except ExpatError:
             return
 
@@ -82,9 +85,9 @@ class PluginXML(PackageFile):
 
     def write(self, output_path):
         with open(output_path, 'w') as f:
-            f.write(str(self))
+            f.write(self.output())
 
-    def __repr__(self):
+    def output(self):
         s = ''
         indent = 0
         need_class_libraries_tag = len(self.libraries) > 1 or self.has_class_libraries_tag

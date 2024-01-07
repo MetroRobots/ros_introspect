@@ -103,16 +103,16 @@ class PackageXML(SingularPackageFile):
 
     def __init__(self, full_path, package):
         super().__init__(full_path, package)
-        contents = open(full_path).read()
+        self.contents = open(full_path).read()
         try:
-            self.tree = parse_xml(contents)
+            self.tree = parse_xml(self.contents)
             self.root = self.tree.getElementsByTagName('package')[0]
         except (ExpatError, IndexError):
             self.tree = parse_xml('<package />')
             package_tags = self.tree.getElementsByTagName('package')
             self.root = package_tags[0]
 
-        self.header = contents[:get_package_tag_index(contents)]
+        self.header = self.contents[:get_package_tag_index(self.contents)]
 
     @classmethod
     def category_name(cls):
@@ -323,7 +323,7 @@ class PackageXML(SingularPackageFile):
             self.insert_new_packages('exec_depend', run_depends - both)
 
         if test_depends_to_add:
-            existing_test = self.lookup_dependencies('test')
+            existing_test = self.lookup_dependencies(DependencyType.TEST)
             test_depends = test_depends_to_add - existing_build - build_depends_to_add - existing_test
             self.insert_new_packages('test_depend', test_depends)
 
@@ -346,10 +346,12 @@ class PackageXML(SingularPackageFile):
         parent.removeChild(element)
         self.changed = True
 
-    def write(self, output_path):
+    def output(self):
         s = self.tree.toxml(self.tree.encoding)
         index = get_package_tag_index(s)
         s = self.header + s[index:] + '\n'
+        return s
 
+    def write(self, output_path):
         with open(output_path, 'wb') as f:
-            f.write(s.encode('UTF-8'))
+            f.write(self.output().encode('UTF-8'))
