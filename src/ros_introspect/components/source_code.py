@@ -1,4 +1,4 @@
-from ..package import PackageFile, DependencyType, package_file
+from ..package import PackageTextFile, DependencyType, package_file
 from ..ros_resources import ROSResources
 import os
 import re
@@ -43,14 +43,13 @@ def is_python_hashbang_line(s):
 
 
 @package_file
-class SourceCode(PackageFile):
+class SourceCode(PackageTextFile):
 
     def __init__(self, full_path, package):
         super().__init__(full_path, package)
-        self.changed_contents = None
         self.resources = ROSResources.get()
 
-        self.lines = list(map(str.strip, self.get_contents().split('\n')))
+        self.lines = list(map(str.strip, self.contents.split('\n')))
         if self.full_path.suffix in CPP_EXTS:
             self.language = 'c++'
         elif self.full_path.suffix in PYTHON_EXTS or (len(self.lines) > 0 and is_python_hashbang_line(self.lines[0])):
@@ -78,11 +77,6 @@ class SourceCode(PackageFile):
             parts = self.rel_fn.parts
             if len(parts) > 1 and parts[0] == 'include':
                 self.tags.add('header')
-
-    def get_contents(self):
-        if self.changed_contents:
-            return self.changed_contents
-        return open(self.full_path).read()
 
     @classmethod
     def is_type(cls, path):
@@ -140,10 +134,6 @@ class SourceCode(PackageFile):
 
     def is_executable(self):
         return os.access(self.full_path, os.X_OK)
-
-    def write(self, output_path):
-        with open(output_path, 'w') as f:
-            f.write(self.get_contents())
 
     def __repr__(self):
         attribs = [self.language] + list(self.tags)

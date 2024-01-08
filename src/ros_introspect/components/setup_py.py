@@ -1,4 +1,4 @@
-from ..package import SingularPackageFile, package_file
+from ..package import SingularPackageFile, PackageTextFile, package_file
 import ast
 import collections
 import pathlib
@@ -152,7 +152,7 @@ def contains_quoted_string(container, s):
 
 
 @package_file
-class SetupPy(SingularPackageFile):
+class SetupPy(SingularPackageFile, PackageTextFile):
     """
     Representation of a setup.py file, covering a large range of different styles
 
@@ -173,16 +173,11 @@ class SetupPy(SingularPackageFile):
     """
 
     def __init__(self, full_path, package):
-        super().__init__(full_path, package)
+        PackageTextFile.__init__(self, full_path, package)
 
         self.args = collections.OrderedDict()
 
-        if self.full_path.exists():
-            original_contents = open(full_path, 'r').read()
-        else:
-            original_contents = ''
-
-        if not original_contents:
+        if not self.contents:
             self.changed = True
             self.hash_bang = True
             if package.ros_version == 1:
@@ -200,7 +195,7 @@ class SetupPy(SingularPackageFile):
                 self.args['name'] = 'package_name'
             return
 
-        self.hash_bang = (original_contents[0] == '#')
+        self.hash_bang = (self.contents[0] == '#')
         self.imports = []
         self.declare_package_name = False
         self.helper_function = None
@@ -209,7 +204,7 @@ class SetupPy(SingularPackageFile):
         # Split into imports / body
         import_elements = []
         body_elements = []
-        for el in ast.parse(original_contents).body:
+        for el in ast.parse(self.contents).body:
             if isinstance(el, ast.ImportFrom):
                 import_elements.append(el)
             else:
@@ -233,7 +228,7 @@ class SetupPy(SingularPackageFile):
             elif isinstance(el, ast.Tuple):
                 return tuple(ast_to_python(elt) for elt in el.elts)
             else:
-                return get_source_segment(original_contents, el)
+                return get_source_segment(self.contents, el)
 
         # Determine variable name and dictionary args
         for el in body_elements:
@@ -312,11 +307,7 @@ class SetupPy(SingularPackageFile):
             if import_item not in self.imports:
                 self.imports.append(import_item)
 
-    def write(self, output_path):
-        with open(output_path, 'w') as f:
-            f.write(self.generate_contents())
-
-    def generate_contents(self):
+    def regenerate_contents(self):
         s = ''
 
         if self.hash_bang:

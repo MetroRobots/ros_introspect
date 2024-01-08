@@ -1,4 +1,4 @@
-from ..package import SingularPackageFile, package_file, DependencyType
+from ..package import SingularPackageFile, PackageTextFile, package_file, DependencyType
 from xml.dom.minidom import parseString as parse_xml
 from xml.parsers.expat import ExpatError
 import re
@@ -99,11 +99,10 @@ def count_trailing_spaces(s):
 
 
 @package_file
-class PackageXML(SingularPackageFile):
+class PackageXML(SingularPackageFile, PackageTextFile):
 
     def __init__(self, full_path, package):
-        super().__init__(full_path, package)
-        self.contents = open(full_path).read()
+        PackageTextFile.__init__(self, full_path, package)
         try:
             self.tree = parse_xml(self.contents)
             self.root = self.tree.getElementsByTagName('package')[0]
@@ -346,12 +345,8 @@ class PackageXML(SingularPackageFile):
         parent.removeChild(element)
         self.changed = True
 
-    def output(self):
+    def regenerate_contents(self):
         s = self.tree.toxml(self.tree.encoding)
         index = get_package_tag_index(s)
         s = self.header + s[index:] + '\n'
         return s
-
-    def write(self, output_path):
-        with open(output_path, 'wb') as f:
-            f.write(self.output().encode('UTF-8'))

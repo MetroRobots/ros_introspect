@@ -1,4 +1,4 @@
-from ..package import PackageFile, package_file, DependencyType
+from ..package import PackageTextFile, package_file, DependencyType
 import re
 
 AT_LEAST_THREE_DASHES = re.compile(r'^\-{3,}\r?$')
@@ -72,7 +72,7 @@ class InterfaceSection:
         return ''.join(map(str, self.contents))
 
 
-class ROSInterface(PackageFile):
+class ROSInterface(PackageTextFile):
     def __init__(self, full_path, package):
         super().__init__(full_path, package)
 
@@ -80,9 +80,6 @@ class ROSInterface(PackageFile):
         self.name = full_path.stem
         self.fn = full_path.name
         self.sections = [InterfaceSection()]
-
-        with open(full_path) as f:
-            self.contents = f.read()
 
         for line in self.contents.split('\n'):
             if AT_LEAST_THREE_DASHES.match(line):
@@ -109,12 +106,8 @@ class ROSInterface(PackageFile):
 
         return deps
 
-    def output(self):
+    def regenerate_contents(self):
         return '---\n'.join(map(str, self.sections))
-
-    def write(self, output_path):
-        with open(output_path, 'w') as f:
-            f.write(self.output())
 
 
 @package_file

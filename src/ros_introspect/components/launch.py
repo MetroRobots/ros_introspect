@@ -1,10 +1,10 @@
-from ..package import PackageFile, package_file, DependencyType
+from ..package import PackageTextFile, package_file, DependencyType
 import re
-from xml.dom.minidom import parse as parse_xml_file, parseString as parse_xml
+from xml.dom.minidom import parseString as parse_xml
 from xml.parsers.expat import ExpatError
 
 
-class Launch(PackageFile):
+class Launch(PackageTextFile):
     def get_dependencies(self, dependency_type):
         deps = set()
         if self.is_test:
@@ -30,7 +30,7 @@ class LaunchXML(Launch):
     def __init__(self, full_path, package):
         super().__init__(full_path, package)
         try:
-            self.tree = parse_xml_file(open(full_path))
+            self.tree = parse_xml(self.contents)
             self.is_test = len(self.tree.getElementsByTagName('test')) > 0
         except (ExpatError, FileNotFoundError):  # pragma: no cover (invalid/nonexistent launch xml)
             self.tree = parse_xml('<launch />')
@@ -72,10 +72,8 @@ class LaunchXML(Launch):
             s.add(x.group(1))
         return s
 
-    def write(self, output_path):
-        s = self.tree.toxml(self.tree.encoding)
-        with open(output_path, 'wb') as f:
-            f.write(s.encode('UTF-8'))
+    def regenerate_contents(self):
+        return self.tree.toxml(self.tree.encoding)
 
 
 PY_NODE_PATTERN = re.compile(r'package=["\']([\w_]+)["\']')
@@ -88,7 +86,6 @@ class LaunchPy(Launch):
     def __init__(self, full_path, package):
         super().__init__(full_path, package)
         self.is_test = self.rel_fn.parts[0] == 'test'
-        self.contents = open(full_path).read()
 
     @classmethod
     def is_type(cls, path):
@@ -117,7 +114,3 @@ class LaunchPy(Launch):
         if 'xacro' in self.contents:
             s.add('xacro')
         return sorted(s)
-
-    def write(self, output_path):
-        with open(output_path, 'w') as f:
-            f.write(self.contents)

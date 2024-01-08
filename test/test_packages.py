@@ -57,8 +57,8 @@ def test_kungfu():
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
         manifest.write(temp.name)
 
-    original = open(manifest.full_path).read()
-    s = open(temp.name).read()
+    original = open(manifest.full_path, 'rb').read()
+    s = open(temp.name, 'rb').read()
     assert original == s
     temp.close()
 
