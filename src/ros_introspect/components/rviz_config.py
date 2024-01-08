@@ -73,4 +73,4 @@ class RVizConfig(PackageFile):
 
     def write(self, output_path):
         with open(output_path, 'w') as f:
-            rviz_yaml.dump(self.contents, f, transform=lambda s: s.replace(": ''\n", ': ""\n'))
+            rviz_yaml.dump(self.contents, f)
