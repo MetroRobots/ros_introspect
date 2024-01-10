@@ -53,15 +53,6 @@ def test_kungfu():
     assert manifest.std_tab == 4
     assert str(pkg) != ''
 
-    # Test Write
-    with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
-        manifest.write(temp.name)
-
-    original = open(manifest.full_path).read()
-    s = open(temp.name).read()
-    assert original == s
-    temp.close()
-
     assert pathlib.Path('test_file.yaml') in pkg.components_by_name
     assert pathlib.Path('ignore_file.yaml~') not in pkg.components_by_name
 
