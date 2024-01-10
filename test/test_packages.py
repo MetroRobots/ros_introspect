@@ -53,15 +53,6 @@ def test_kungfu():
     assert manifest.std_tab == 4
     assert str(pkg) != ''
 
-    # Test Write
-    with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
-        manifest.write(temp.name)
-
-    original = open(manifest.full_path, 'rb').read()
-    s = open(temp.name, 'rb').read()
-    assert original == s
-    temp.close()
-
     assert pathlib.Path('test_file.yaml') in pkg.components_by_name
     assert pathlib.Path('ignore_file.yaml~') not in pkg.components_by_name
 
@@ -92,6 +83,13 @@ def test_bad_case():
     assert manifest.xml_format == 1
     assert manifest.std_tab == 0
     assert manifest.get_license() is None
+
+    manifest.force_regeneration()
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
+        manifest.write(temp.name)
+    s = open(temp.name, 'r').read()
+    assert '<description/>' in s
+    temp.close()
 
 
 def test_bad_case2():

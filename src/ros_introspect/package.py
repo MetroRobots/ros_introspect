@@ -80,6 +80,12 @@ class PackageTextFile(PackageFile):
 
         self.original_contents = self.contents
 
+    def get_lines(self):
+        lines = []
+        if self.contents:
+            lines = list(self.contents.split('\n'))
+        return lines
+
     def regenerate_contents(self):
         return self.contents
 

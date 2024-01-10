@@ -81,7 +81,7 @@ class ROSInterface(PackageTextFile):
         self.fn = full_path.name
         self.sections = [InterfaceSection()]
 
-        for line in self.contents.split('\n'):
+        for line in self.get_lines():
             if AT_LEAST_THREE_DASHES.match(line):
                 self.sections.append(InterfaceSection())
                 continue

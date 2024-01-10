@@ -9,7 +9,10 @@ ruamel_yaml = ruamel.yaml.YAML()
 class ParamConfig(PackageFile):
     def __init__(self, full_path, package):
         super().__init__(full_path, package)
-        self.contents = ruamel_yaml.load(open(full_path))
+        if full_path.exists():
+            self.contents = ruamel_yaml.load(open(full_path))
+        else:
+            self.contents = None
 
     @classmethod
     def is_type(cls, path):

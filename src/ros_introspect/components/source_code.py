@@ -49,7 +49,7 @@ class SourceCode(PackageTextFile):
         super().__init__(full_path, package)
         self.resources = ROSResources.get()
 
-        self.lines = list(map(str.strip, self.contents.split('\n')))
+        self.lines = self.get_lines()
         if self.full_path.suffix in CPP_EXTS:
             self.language = 'c++'
         elif self.full_path.suffix in PYTHON_EXTS or (len(self.lines) > 0 and is_python_hashbang_line(self.lines[0])):
