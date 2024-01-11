@@ -31,7 +31,7 @@ class LaunchXML(Launch):
         try:
             self.tree = parse_xml(self.contents)
             self.is_test = len(self.tree.getElementsByTagName('test')) > 0
-        except (ExpatError, FileNotFoundError):  # pragma: no cover (invalid/nonexistent launch xml)
+        except (ExpatError, FileNotFoundError, TypeError):  # pragma: no cover (invalid/nonexistent launch xml)
             self.tree = parse_xml('<launch />')
             self.is_test = False
 

@@ -1,5 +1,6 @@
 
-from ros_introspect import find_packages
+from ros_introspect import find_packages, Package
+from ros_introspect.package import PackageFile
 from test_finder import TEST_DATA_FOLDER
 import tempfile
 
@@ -19,3 +20,9 @@ def test_component_writes():
     for package in find_packages(TEST_DATA_FOLDER):
         for component in package.components_by_name.values():
             copy_component_to_temp(component)
+
+
+def test_missing_files():
+    pkg = Package(TEST_DATA_FOLDER / 'eleanor' / 'hibachi')
+    for subtype in PackageFile.SUBTYPES:
+        subtype(pkg.root / 'DOES_NOT_EXIST', pkg)

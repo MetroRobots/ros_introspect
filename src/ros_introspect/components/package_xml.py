@@ -106,12 +106,12 @@ class PackageXML(SingularPackageFile, PackageTextFile):
         try:
             self.tree = parse_xml(self.contents)
             self.root = self.tree.getElementsByTagName('package')[0]
-        except (ExpatError, IndexError):
+            self.header = self.contents[:get_package_tag_index(self.contents)]
+        except (ExpatError, IndexError, TypeError):
             self.tree = parse_xml('<package />')
             package_tags = self.tree.getElementsByTagName('package')
             self.root = package_tags[0]
-
-        self.header = self.contents[:get_package_tag_index(self.contents)]
+            self.header = ''
 
     @classmethod
     def category_name(cls):
