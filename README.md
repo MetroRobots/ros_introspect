@@ -6,7 +6,7 @@ You can specify the path directly.
 
 ```
 from ros_introspect import Package
-pkg = Package('/full/path/geometry_msgs')
+package = Package('/full/path/geometry_msgs')
 ```
 or you can use the built-in crawler to search recursively
 
