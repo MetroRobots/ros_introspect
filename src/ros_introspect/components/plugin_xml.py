@@ -16,12 +16,10 @@ class PluginXML(PackageTextFile):
         self.libraries = OrderedDict()
         self.parent_pkgs = set()
 
-        self.read()
+        if self.contents:
+            self.read()
 
     def read(self):
-        if self.contents is None:
-            return
-
         try:
             tree = parse_xml(self.contents)
         except ExpatError:
