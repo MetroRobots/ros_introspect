@@ -1,4 +1,4 @@
-from ..package import PackageFile, package_file, DependencyType
+from ..package import PackageTextFile, package_file, DependencyType
 import re
 
 FIND_PATTERN = re.compile(r'\$\(find ([^\)]+)\)')
@@ -6,11 +6,7 @@ PACKAGE_PATTERN = re.compile(r'package://([^/]+)/')
 
 
 @package_file
-class UrdfFile(PackageFile):
-    def __init__(self, full_path, package):
-        super().__init__(full_path, package)
-        self.contents = open(full_path).read()
-
+class UrdfFile(PackageTextFile):
     @classmethod
     def is_type(cls, path):
         return path.suffix in ['.urdf', '.xacro']

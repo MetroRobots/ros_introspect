@@ -68,6 +68,35 @@ class SingularPackageFile(PackageFile):
         return cls.category_name() == path.name
 
 
+class PackageTextFile(PackageFile):
+    def __init__(self, full_path, package):
+        super().__init__(full_path, package)
+        if self.full_path.exists():
+            with open(self.full_path, 'r') as f:
+                self.contents = f.read()
+        else:
+            self.contents = None
+
+        self.original_contents = self.contents
+
+    def get_lines(self):
+        lines = []
+        if self.contents:
+            lines = list(self.contents.split('\n'))
+        return lines
+
+    def regenerate_contents(self):
+        return self.contents
+
+    def force_regeneration(self):
+        if self.contents != self.regenerate_contents():
+            self.changed = True
+
+    def write(self, output_path):
+        with open(output_path, 'w') as f:
+            f.write(self.regenerate_contents())
+
+
 class MiscPackageFile(PackageFile):
     @classmethod
     def is_type(cls, path):
