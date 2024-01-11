@@ -84,6 +84,13 @@ def test_bad_case():
     assert manifest.std_tab == 0
     assert manifest.get_license() is None
 
+    manifest.force_regeneration()
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
+        manifest.write(temp.name)
+    s = open(temp.name, 'r').read()
+    assert '<description/>' in s
+    temp.close()
+
 
 def test_bad_case2():
     with pytest.raises(RuntimeError) as e_info:
