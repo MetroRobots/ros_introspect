@@ -115,9 +115,15 @@ class SourceCode(PackageTextFile):
 
         return pkgs
 
-    def get_dependencies(self, dependency_type):
+    def get_dependencies(self, dependency_type, language=None):
         deps = set()
-        if dependency_type == DependencyType.TEST and 'test' not in self.tags:
+        if (dependency_type == DependencyType.TEST) == ('test' not in self.tags):
+            # Skip if
+            # * looking for test dependencies and this is not a test file OR
+            # * looking for non-test dependencies and this is a test file
+            return deps
+
+        if dependency_type == DependencyType.BUILD and self.language == 'python':
             return deps
 
         if self.language == 'python' and 'test' in self.tags and self.package.ros_version == 2:

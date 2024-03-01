@@ -1,9 +1,8 @@
 from ..package import PackageFile, package_file
 
 MISC_CONFIGS = {
-    '.travis.yml',
-    '.pre-commit-config.yaml',
     'bitbucket-pipelines.yml',
+    '.clang-format'
 }
 
 
@@ -13,6 +12,8 @@ class MiscConfig(PackageFile):
     def is_type(cls, path):
         if path.name in MISC_CONFIGS:
             return True
-        if '.github' in path.parts:
+        elif path.name and path.name[0] == '.' and path.suffix in ['.yaml', '.yml']:
+            return True
+        elif '.github' in path.parts:
             return True
         return False

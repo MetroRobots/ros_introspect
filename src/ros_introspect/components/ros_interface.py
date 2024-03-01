@@ -102,6 +102,8 @@ class ROSInterface(PackageTextFile):
                 if '/' not in field.type:
                     continue
                 package = field.type.split('/')[0]
+                if package == self.package.name:
+                    continue
                 deps.add(package)
 
         return deps

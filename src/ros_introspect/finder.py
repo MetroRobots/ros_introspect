@@ -67,7 +67,7 @@ def walk(root, include_hidden=True):
 
             if subpath.is_dir():
                 # Folder
-                if not is_repo_marker(subpath):
+                if not is_repo_marker(subpath) and subpath.name != '.pytest_cache':
                     queue.append(subpath)
             else:
                 # File
