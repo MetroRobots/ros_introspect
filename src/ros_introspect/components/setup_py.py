@@ -287,7 +287,7 @@ class SetupPy(SingularPackageFile, PackageTextFile):
             if not isinstance(existing_files, list):
                 raise RuntimeError('Trouble understanding the install data_files bit of the setup.py')
 
-        if folder == 'resource' and self.declare_package_name and "'resource/' + package_name" in existing_files:
+        if str(folder) == 'resource' and self.declare_package_name and "'resource/' + package_name" in existing_files:
             paths.remove(self.package.name)
 
         for fn in paths:
