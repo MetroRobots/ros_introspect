@@ -8,4 +8,4 @@ class DynamicReconfig(PackageFile):
 
     @classmethod
     def is_type(cls, path):
-        return path.suffix == '.cfg' and path.parts[-2] == 'cfg'
+        return path.suffix == '.cfg' and len(path.parts) > 1 and path.parts[-2] == 'cfg'
