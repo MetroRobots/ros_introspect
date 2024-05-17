@@ -24,7 +24,7 @@ class ROSResources(object):
     def get(cls):
         return cls()
 
-    def load_from_ros(self):
+    def load_from_ros(self):  # pragma: no cover
         self.packages |= get_package_names()
         for interface in list_interfaces():
             self.add_interface(interface)
