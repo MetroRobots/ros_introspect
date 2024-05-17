@@ -1,4 +1,5 @@
 from ..package import SingularPackageFile, package_file
+from io import StringIO
 import configparser
 
 
@@ -31,5 +32,11 @@ class SetupCFG(SingularPackageFile):
             self.changed = True
 
     def write(self, output_path):
+        buffer = StringIO()
+        self.config.write(buffer, space_around_delimiters=False)
+        buffer.seek(0)
+        contents = buffer.read()
+        if contents.endswith('\n\n'):
+            contents = contents[:-1]
         with open(output_path, 'w') as f:
-            self.config.write(f, space_around_delimiters=False)
+            f.write(contents)
