@@ -1,6 +1,7 @@
 # ros_introspect
 
- `ros_introspect` is a pure-Python library for looking at the files within a ROS package in a structured way. It is compatible with both ROS 1 and ROS 2.
+ `ros_introspect` is a Pure Python library for working with the files in ROS packages in a structured way.
+It is compatible with both ROS 1 and ROS 2.
 
 You can specify the path directly.
 
