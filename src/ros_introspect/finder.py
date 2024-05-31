@@ -54,14 +54,24 @@ def find_sibling_package_roots(package_folder):
             yield subfolder
 
 
-def walk(root, include_hidden=True):
+def is_hidden(path, check_all=True):
+    parts = path.parts
+    if not check_all:
+        parts = parts[-1:]
+    for part in parts:
+        if part.startswith('.'):
+            return True
+    return False
+
+
+def walk(root, include_hidden=False):
     """Yield the paths of all the "valid" files in a directory, relative to the directory"""
 
     queue = [root]
     while queue:
         folder = queue.pop(0)
         for subpath in folder.iterdir():
-            if not include_hidden and subpath.name.startswith('.'):
+            if not include_hidden and is_hidden(subpath, check_all=False):
                 # Ignore hidden files and directories
                 continue
 
