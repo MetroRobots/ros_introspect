@@ -36,5 +36,5 @@ def test_siblings():
 
 def test_walk():
     folder = TEST_DATA_FOLDER / 'eleanor' / 'kungfu'
-    assert len(list(walk(folder))) == 5
+    assert len(list(walk(folder, include_hidden=True))) == 5
     assert len(list(walk(folder, include_hidden=False))) == 4
