@@ -198,12 +198,20 @@ class PackageXML(SingularPackageFile, PackageTextFile):
             pkgs |= self.get_packages_by_tag(key)
         return pkgs
 
-    def get_people(self):
+    def get_people_by_tag(self, tag):
         people = []
-        for el in self.get_elements_by_tags(PEOPLE_TAGS):
+        for el in self.root.getElementsByTagName(tag):
             name = el.childNodes[0].nodeValue
             email = el.getAttribute('email')
             people.append(Person(name, email))
+        return people
+
+    def get_people(self):
+        people = []
+        for tag in PEOPLE_TAGS:
+            for person in self.get_people_by_tag(tag):
+                if person not in people:
+                    people.append(person)
         return people
 
     def get_license_element(self):
