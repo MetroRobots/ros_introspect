@@ -11,7 +11,7 @@ if sys.version_info.major == 3 and sys.version_info.minor >= 8:
         return isinstance(el.value, ast.Constant)
 
     get_source_segment = ast.get_source_segment
-else:
+else:  # pragma: no cover
     def is_constant(el):
         return isinstance(el.value, ast.Str)
 
@@ -245,6 +245,13 @@ class SetupPy(SingularPackageFile, PackageTextFile):
                 for keyword in el.value.keywords:
                     self.args[keyword.arg] = ast_to_python(keyword.value)
 
+    def set_arg(self, key, value):
+        f_value = repr(value)
+        if self.args.get(key) == f_value:
+            return
+        self.args[key] = f_value
+        self.changed = True
+
     def get_share_path(self, rel_fn=None):
         if str(rel_fn) == 'resource':
             return "'share/ament_index/resource_index/packages'"
@@ -284,7 +291,7 @@ class SetupPy(SingularPackageFile, PackageTextFile):
                     for subpath in root.glob(glob_pattern):
                         existing_files.append(quote_string(str(subpath).replace(str(root) + '/', '')))
 
-            if not isinstance(existing_files, list):
+            if not isinstance(existing_files, list):  # pragma: no cover
                 raise RuntimeError('Trouble understanding the install data_files bit of the setup.py')
 
         if str(folder) == 'resource' and self.declare_package_name and "'resource/' + package_name" in existing_files:
@@ -349,7 +356,7 @@ def create_setup_py(package):
     package.add_file(SetupPy(package.root / 'setup.py', package))
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no coverage
     output_dir = pathlib.Path('output_data')
     output_dir.mkdir(exist_ok=True)
 
