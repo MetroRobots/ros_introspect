@@ -18,6 +18,13 @@ for package in find_packages('/home/dlu/ros2_ws/src'):
     print(package)
 ```
 
+## Installation
+
+[![PyPI version](https://badge.fury.io/py/ros-introspect.svg)](https://badge.fury.io/py/ros-introspect)
+
+    sudo pip3 install ros-introspect
+
+
 
 ## The `Package` Class
 
