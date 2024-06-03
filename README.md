@@ -1,4 +1,4 @@
-# ros_introspect
+![ros_introspect logo](docs/Logo.png)
 
  `ros_introspect` is a Pure Python library for working with the files in ROS packages in a structured way.
 It is compatible with both ROS 1 and ROS 2.
