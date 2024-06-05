@@ -1,7 +1,7 @@
 from ..package import PackageTextFile, package_file, DependencyType
 import re
 
-AT_LEAST_THREE_DASHES = re.compile(r'^\-{3,}\r?$')
+AT_LEAST_THREE_DASHES = re.compile(r'^\-{3,}\s*$')
 FIELD_LINE = re.compile(r'\s*'  # Leading Whitespace
                         r'([\w_/]+|string<=\d+)'  # Package/primitive name (or funky string def)
                         r'(\[<?=?\d*\])?'  # Optional array size
@@ -38,9 +38,10 @@ class InterfaceField:
 
 
 class InterfaceSection:
-    def __init__(self):
+    def __init__(self, separator_line=None):
         self.contents = []
         self.fields = []
+        self.separator_line = separator_line
 
     def add_line(self, line):
         stripped = line.strip()
@@ -69,7 +70,11 @@ class InterfaceSection:
             raise Exception('Unable to parse interface line: ' + repr(line))  # pragma: no cover
 
     def __repr__(self):
-        return ''.join(map(str, self.contents))
+        s = ''.join(map(str, self.contents))
+        if self.separator_line:
+            return self.separator_line + '\n' + s
+        else:
+            return s
 
 
 class ROSInterface(PackageTextFile):
@@ -83,7 +88,7 @@ class ROSInterface(PackageTextFile):
 
         for line in self.get_lines():
             if AT_LEAST_THREE_DASHES.match(line):
-                self.sections.append(InterfaceSection())
+                self.sections.append(InterfaceSection(line))
                 continue
             else:
                 self.sections[-1].add_line(line)
@@ -109,7 +114,7 @@ class ROSInterface(PackageTextFile):
         return deps
 
     def regenerate_contents(self):
-        return '---\n'.join(map(str, self.sections))
+        return ''.join(map(str, self.sections))
 
 
 @package_file
