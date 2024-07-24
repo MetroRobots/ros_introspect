@@ -319,11 +319,21 @@ class PackageXML(SingularPackageFile, PackageTextFile):
             depend_tags = set()
             for dep_type in DEPEND_TYPES:
                 depend_tags |= dependency_dict[dep_type]
+            depend_tags.discard('message_generation')
+            depend_tags.discard('message_runtime')
+            depend_tags.discard('rosidl_default_generators')
+            depend_tags.discard('rosidl_default_runtime')
 
             # Remove tags that overlap with new depends
             for dep_type in DEPEND_TYPES:
-                self.remove_dependencies(DEPENDENCY_TAG_MATCHING[dep_type],
-                                         existing_deps[dep_type].intersection(depend_tags))
+                tag_name = DEPENDENCY_TAG_MATCHING[dep_type]
+
+                # Remove tags that were converted to depend tags
+                self.remove_dependencies(tag_name, existing_deps[dep_type].intersection(depend_tags))
+
+                # Insert new tags
+                remaining_deps = dependency_dict[dep_type] - existing_deps[dep_type]
+                self.insert_new_packages(tag_name, remaining_deps - depend_tags)
 
             # Insert depends
             existing_depend = self.get_packages_by_tag('depend')
