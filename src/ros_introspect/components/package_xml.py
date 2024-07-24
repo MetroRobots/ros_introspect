@@ -24,6 +24,21 @@ FORMAT_3_HEADER = """<?xml version="1.0"?>
   schematypens="http://www.w3.org/2001/XMLSchema"?>
 """
 
+# The depend tag is equivalent to these three tags
+DEPEND_TYPES = [DependencyType.BUILD, DependencyType.BUILD_EXPORT, DependencyType.RUN]
+DEPENDENCY_TAG_MATCHING_V1 = {
+    DependencyType.BUILD: 'build_depend',
+    DependencyType.RUN: 'run_depend',
+    DependencyType.TEST: 'test_depend',
+}
+DEPENDENCY_TAG_MATCHING = {
+    DependencyType.BUILD: 'build_depend',
+    DependencyType.RUN: 'exec_depend',
+    DependencyType.TEST: 'test_depend',
+    DependencyType.BUILD_EXPORT: 'build_export_depend',
+}
+
+
 # In most manifests, the ordering of the mblock doesn't matter, but we sort the depends
 ORDERING = INITIAL_TAGS + [MBLOCK_TAGS] + DEPEND_TAGS + FINAL_TAGS
 # In V3 manifests, we ensure the mblock is sorted, but not the depends
@@ -181,17 +196,13 @@ class PackageXML(SingularPackageFile, PackageTextFile):
     # This is just to look up what's already in the package
     def lookup_dependencies(self, dependency_type):
         keys = []
-        if dependency_type == DependencyType.BUILD:
-            keys.append('build_depend')
-
-        if self.xml_format == 1 and dependency_type == DependencyType.RUN:
-            keys.append('run_depend')
-        if self.xml_format >= 2 and dependency_type != DependencyType.TEST:
-            keys.append('depend')
-            if dependency_type == DependencyType.RUN:
-                keys.append('exec_depend')
-        if dependency_type == DependencyType.TEST:
-            keys.append('test_depend')
+        if self.xml_format == 1:
+            if dependency_type in DEPENDENCY_TAG_MATCHING_V1:
+                keys.append(DEPENDENCY_TAG_MATCHING_V1[dependency_type])
+        else:
+            keys.append(DEPENDENCY_TAG_MATCHING[dependency_type])
+            if dependency_type in DEPEND_TYPES:
+                keys.append('depend')
 
         pkgs = set()
         for key in keys:
@@ -288,50 +299,66 @@ class PackageXML(SingularPackageFile, PackageTextFile):
             self.create_new_tag(tag, pkg)
 
     def add_dependencies(self, dependency_dict, prefer_depend_tag=False):
-        build_depends_to_add = dependency_dict.get(DependencyType.BUILD, set())
-        run_depends_to_add = dependency_dict.get(DependencyType.RUN, set())
-        test_depends_to_add = dependency_dict.get(DependencyType.TEST, set())
+        if self.xml_format == 1:
+            dependency_dict[DependencyType.RUN].update(dependency_dict[DependencyType.BUILD])
+
+            # Special handling because message_generation is never a run dep
+            dependency_dict[DependencyType.RUN].discard('message_generation')
+
+        # Get Existing Dependencies
+        existing_deps = {}
+        for dep_type in DependencyType:
+            existing_deps[dep_type] = self.lookup_dependencies(dep_type)
 
         if self.xml_format == 1:
-            run_depends_to_add.update(build_depends_to_add)
-
-        existing_build = self.lookup_dependencies(DependencyType.BUILD)
-        existing_run = self.lookup_dependencies(DependencyType.RUN)
-
-        if self.xml_format == 1:
-            self.insert_new_packages('build_depend', build_depends_to_add - existing_build)
-            self.insert_new_packages('run_depend', run_depends_to_add - existing_run)
+            for dep_type in [DependencyType.BUILD, DependencyType.RUN]:
+                self.insert_new_packages(DEPENDENCY_TAG_MATCHING_V1[dep_type],
+                                         dependency_dict[dep_type] - existing_deps[dep_type])
         elif prefer_depend_tag:
-            depend_tags = build_depends_to_add.union(run_depends_to_add)
+            # If prefer depend tag is True, any time you have a BUILD, EXPORT or RUN dependency, just add depend
+            depend_tags = set()
+            for dep_type in DEPEND_TYPES:
+                depend_tags |= dependency_dict[dep_type]
 
             # Remove tags that overlap with new depends
-            self.remove_dependencies('build_depend', existing_build.intersection(depend_tags))
-            self.remove_dependencies('exec_depend', existing_run.intersection(depend_tags))
+            for dep_type in DEPEND_TYPES:
+                self.remove_dependencies(DEPENDENCY_TAG_MATCHING[dep_type],
+                                         existing_deps[dep_type].intersection(depend_tags))
 
             # Insert depends
-            self.insert_new_packages('depend', depend_tags)
+            existing_depend = self.get_packages_by_tag('depend')
+            self.insert_new_packages('depend', depend_tags - existing_depend)
         else:
-            # Only insert depend tag when present in BOTH build and run
-            all_build = build_depends_to_add.union(existing_build)
-            all_run = run_depends_to_add.union(existing_run)
-            both = all_build.intersection(all_run)
+            # Only insert depend tag when there is a BUILD, EXPORT *and* RUN dependency
+            existing_triple = None
+            end_deps = None
+            for dep_type in DEPEND_TYPES:
+                all_deps = dependency_dict[dep_type].union(existing_deps[dep_type])
+                if existing_triple is None:
+                    existing_triple = set(existing_deps[dep_type])
+                    end_deps = set(all_deps)
+                else:
+                    existing_triple &= existing_deps[dep_type]
+                    end_deps &= all_deps
 
             existing_depend = self.get_packages_by_tag('depend')
-            self.insert_new_packages('depend', both - existing_depend)
+            depends_to_add = end_deps - existing_depend - existing_triple
+            self.insert_new_packages('depend', depends_to_add)
 
-            # Remove tags that were converted to depend tags
-            self.remove_dependencies('build_depend', existing_build.intersection(both))
-            self.remove_dependencies('exec_depend', existing_run.intersection(both))
+            for dep_type in DEPEND_TYPES:
+                tag_name = DEPENDENCY_TAG_MATCHING[dep_type]
 
-            # Insert new tags
-            build_depends = build_depends_to_add - existing_build
-            run_depends = run_depends_to_add - existing_run
-            self.insert_new_packages('build_depend', build_depends - both)
-            self.insert_new_packages('exec_depend', run_depends - both)
+                # Remove tags that were converted to depend tags
+                self.remove_dependencies(tag_name, existing_deps[dep_type].intersection(depends_to_add))
 
-        if test_depends_to_add:
-            existing_test = self.lookup_dependencies(DependencyType.TEST)
-            test_depends = test_depends_to_add - existing_build - build_depends_to_add - existing_test
+                # Insert new tags
+                remaining_deps = dependency_dict[dep_type] - existing_deps[dep_type]
+                self.insert_new_packages(tag_name, remaining_deps - end_deps)
+
+        if dependency_dict.get(DependencyType.TEST):
+            test_depends = dependency_dict[DependencyType.TEST] - existing_deps[DependencyType.TEST]
+            # Also remove build commands
+            test_depends -= (existing_deps[DependencyType.BUILD] | dependency_dict[DependencyType.BUILD])
             self.insert_new_packages('test_depend', test_depends)
 
     def remove_dependencies(self, name, pkgs):

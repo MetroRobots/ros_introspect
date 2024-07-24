@@ -94,9 +94,25 @@ class ROSInterface(PackageTextFile):
 
     def get_dependencies(self, dependency_type):
         deps = set()
-        if dependency_type != DependencyType.BUILD:
-            return deps
 
+        if self.package.ros_version == 1:
+            if dependency_type == DependencyType.BUILD:
+                deps.add('message_generation')
+            elif dependency_type == DependencyType.RUN:
+                deps.add('message_runtime')
+        else:
+            if dependency_type == DependencyType.BUILD:
+                deps.add('rosidl_default_generators')
+            elif dependency_type == DependencyType.RUN:
+                deps.add('rosidl_default_runtime')
+
+        if dependency_type == DependencyType.BUILD:
+            deps.update(self.get_message_deps())
+
+        return deps
+
+    def get_message_deps(self):
+        deps = set()
         for section in self.sections:
             for field in section.fields:
                 if '/' not in field.type:
@@ -138,8 +154,7 @@ class ROSAction(ROSInterface):
     def category_name(cls):
         return 'Actions'
 
-    def get_dependencies(self, dependency_type):
-        deps = super().get_dependencies(dependency_type)
-        if dependency_type == DependencyType.BUILD:
-            deps.add('actionlib_msgs')
+    def get_message_deps(self):
+        deps = super().get_message_deps()
+        deps.add('actionlib_msgs')
         return deps

@@ -9,7 +9,7 @@ from .finder import find_package_roots, walk
 from .ros_resources import ROSResources
 from .util import convert_to_underscore_notation
 
-DependencyType = IntEnum('DependencyType', ['BUILD', 'RUN', 'TEST'])
+DependencyType = IntEnum('DependencyType', ['BUILD', 'RUN', 'BUILD_EXPORT', 'TEST'])
 
 
 class PackageFile:
