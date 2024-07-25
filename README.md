@@ -1,4 +1,4 @@
-# ros_introspect
+![ros_introspect logo](docs/Logo.png)
 
  `ros_introspect` is a Pure Python library for working with the files in ROS packages in a structured way.
 It is compatible with both ROS 1 and ROS 2.
@@ -17,6 +17,13 @@ from ros_introspect import find_packages
 for package in find_packages('/home/dlu/ros2_ws/src'):
     print(package)
 ```
+
+## Installation
+
+[![PyPI version](https://badge.fury.io/py/ros-introspect.svg)](https://badge.fury.io/py/ros-introspect)
+
+    sudo pip3 install ros-introspect
+
 
 
 ## The `Package` Class

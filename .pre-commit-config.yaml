@@ -3,6 +3,7 @@ repos:
   hooks:
   - id: end-of-file-fixer
   - id: trailing-whitespace
+    exclude: test_data
   - id: check-merge-conflict
   - id: mixed-line-ending
   - id: check-executables-have-shebangs
