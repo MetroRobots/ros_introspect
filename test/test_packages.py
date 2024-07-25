@@ -19,7 +19,7 @@ def test_waymond():
     assert pkg.ros_version == 1
     assert pkg.name == 'waymond'
     assert not pkg.has_changes()
-    assert len(pkg.get_dependencies(DependencyType.BUILD)) == 1
+    assert len(pkg.get_dependencies(DependencyType.BUILD)) == 2
     assert manifest.name == 'waymond'
     assert manifest.xml_format == 1
     assert manifest.std_tab == 2
