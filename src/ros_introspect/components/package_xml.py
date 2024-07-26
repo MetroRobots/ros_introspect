@@ -60,7 +60,7 @@ def get_ordering_index(name, whiny=True, manifest_version=None):
         elif name == o:
             return i
     if name and whiny:
-        print(f'\t{Fore.YELLOW}Unsure of ordering for {name}{Fore.CLEAR}', file=sys.stderr)  # pragma: no cover
+        print(f'\t{Fore.YELLOW}Unsure of ordering for {name}{Fore.RESET}', file=sys.stderr)  # pragma: no cover
     return len(ordering)
 
 
