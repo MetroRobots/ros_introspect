@@ -2,7 +2,9 @@ from ..package import SingularPackageFile, PackageTextFile, package_file, Depend
 from xml.dom.minidom import parseString as parse_xml
 from xml.parsers.expat import ExpatError
 import re
+import sys
 import collections
+from colorama import Fore
 import operator
 
 Person = collections.namedtuple('Person', 'name email')
@@ -58,7 +60,7 @@ def get_ordering_index(name, whiny=True, manifest_version=None):
         elif name == o:
             return i
     if name and whiny:
-        print('\tUnsure of ordering for ' + name)  # pragma: no cover
+        print(f'\t{Fore.YELLOW}Unsure of ordering for {name}{Fore.CLEAR}', file=sys.stderr)  # pragma: no cover
     return len(ordering)
 
 

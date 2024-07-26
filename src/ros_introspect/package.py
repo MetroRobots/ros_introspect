@@ -1,7 +1,9 @@
 import collections
+from colorama import Fore, init
 from enum import IntEnum
 import pathlib
 import shutil
+import sys
 
 from betsy_ros import ROSInterface
 
@@ -10,6 +12,8 @@ from .ros_resources import ROSResources
 from .util import convert_to_underscore_notation
 
 DependencyType = IntEnum('DependencyType', ['BUILD', 'RUN', 'BUILD_EXPORT', 'TEST'])
+
+init()
 
 
 class PackageFile:
@@ -225,7 +229,7 @@ class Package:
                 else:
                     # TODO: Do not raise if rel_fn[0] == '$'
                     # TODO: Do not raise if rel_fn matches ALL_CAPS_PATTERN
-                    print(f'Cannot find {rel_fn} in package {self.name}')
+                    print(f'{Fore.YELLOW}Cannot find {rel_fn} in package {self.name}{Fore.RESET}', file=sys.stderr)
 
     def get_source_by_tags(self, tags, language=None):
         if isinstance(tags, str):
@@ -269,4 +273,8 @@ class Package:
 
 def find_packages(root_folder=pathlib.Path('.')):
     for package_root in find_package_roots(root_folder):
-        yield Package(package_root)
+        try:
+            yield Package(package_root)
+        except Exception as e:
+            print(f'{Fore.YELLOW}Unable to parse package at {package_root} because {e}. Skipping...{Fore.RESET}',
+                  file=sys.stderr)

@@ -13,6 +13,11 @@ def test_find_packages():
         print(pkg)
 
 
+def test_invalid_package_crawl():
+    pkgs = list(find_packages(TEST_DATA_FOLDER / 'fake_git_root'))
+    assert len(pkgs) == 0
+
+
 def test_waymond():
     pkg = Package(TEST_DATA_FOLDER / 'waymond')
     manifest = pkg.package_xml
