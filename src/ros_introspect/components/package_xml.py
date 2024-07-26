@@ -232,8 +232,8 @@ class PackageXML(SingularPackageFile, PackageTextFile):
     def set_license(self, license_str):
         el = self.get_license_element()
         if not el:
-            # TODO: Create license element
-            pass
+            self.create_new_tag('license', license_str)
+            return
 
         if license != el.childNodes[0].nodeValue:
             el.childNodes[0].nodeValue = license_str
@@ -244,12 +244,12 @@ class PackageXML(SingularPackageFile, PackageTextFile):
 
     def get_insertion_index(self, tag):
         """Return the index where to insert a new element"""
-        new_key = get_sort_key(tag)
+        new_key = get_sort_key(tag, manifest_version=self.xml_format)
         prev_i = None
         for i, child in enumerate(self.root.childNodes):
             if child.nodeType == child.TEXT_NODE:
                 continue
-            key = get_sort_key(child)
+            key = get_sort_key(child, manifest_version=self.xml_format)
 
             if key < new_key:
                 prev_i = i
