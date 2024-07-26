@@ -219,14 +219,6 @@ class PackageXML(SingularPackageFile, PackageTextFile):
             people.append(Person(name, email))
         return people
 
-    def get_people(self):
-        people = []
-        for tag in PEOPLE_TAGS:
-            for person in self.get_people_by_tag(tag):
-                if person not in people:
-                    people.append(person)
-        return people
-
     def get_license_element(self):
         els = self.root.getElementsByTagName('license')
         if els:
@@ -291,10 +283,6 @@ class PackageXML(SingularPackageFile, PackageTextFile):
 
         self.root.childNodes = before + new_bits + after
         self.changed = True
-
-    def insert_new_tags(self, tags):
-        for tag in tags:
-            self.insert_new_tag(tag)
 
     def insert_new_packages(self, tag, values):
         for pkg in sorted(values):
@@ -382,8 +370,7 @@ class PackageXML(SingularPackageFile, PackageTextFile):
     def remove_element(self, element):
         """Remove the given element AND the text element before it if it is just an indentation."""
         parent = element.parentNode
-        if not parent:
-            return
+        assert parent
         index = parent.childNodes.index(element)
         if index > 0:
             previous = parent.childNodes[index - 1]
