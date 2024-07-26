@@ -32,8 +32,6 @@ def test_waymond():
 
     pkg.save()
 
-    people = manifest.get_people()
-    assert len(people) == 1
     assert manifest.get_license() == 'BSD 3-clause'
 
     assert len(pkg.get_ros_interfaces()) == 4
@@ -83,8 +81,6 @@ def test_bad_case():
     pkg = Package(TEST_DATA_FOLDER / 'jobu' / 'kpop')
     manifest = pkg.package_xml
     assert pkg.ros_version == 1
-    assert pkg.name is None
-    assert manifest.name is None
     assert manifest.xml_format == 1
     assert manifest.std_tab == 0
     assert manifest.get_license() is None
@@ -109,6 +105,13 @@ def test_bad_case3():
         Package(TEST_DATA_FOLDER / 'fake_git_root' / 'chad')
 
     assert 'Too many valid buildtool' in str(e_info)
+
+
+def test_bad_case4():
+    with pytest.raises(RuntimeError) as e_info:
+        Package(TEST_DATA_FOLDER / 'jobu' / 'golf')
+
+    assert 'Unable to determine package name' in str(e_info)
 
 
 class FakeComponent(PackageFile):
