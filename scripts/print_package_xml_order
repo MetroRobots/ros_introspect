@@ -7,18 +7,18 @@ from ros_introspect.package import find_packages
 from ros_introspect.components.package_xml import get_sort_key
 
 
-def print_package(element, indent=0):
+def print_package(element, indent=0, version=None):
     click.secho('  ' * indent, nl=False)
     if element.nodeType == element.ELEMENT_NODE:
         click.secho(f'<{element.nodeName}>  ', fg='green', nl=False)
         if indent > 0:
-            key = get_sort_key(element)
+            key = get_sort_key(element, manifest_version=version)
             click.secho(f'{key}', fg='blue')
         else:
             print()
 
         for child in element.childNodes:
-            print_package(child, indent + 1)
+            print_package(child, indent + 1, version)
         click.secho('  ' * indent, nl=False)
         click.secho(f'</{element.nodeName}>', fg='green')
     else:
@@ -30,4 +30,4 @@ parser.add_argument('root', type=pathlib.Path)
 args = parser.parse_args()
 
 for package in find_packages(args.root):
-    print_package(package.package_xml.root)
+    print_package(package.package_xml.root, version=package.package_xml.xml_format)
