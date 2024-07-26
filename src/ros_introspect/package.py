@@ -271,4 +271,8 @@ class Package:
 
 def find_packages(root_folder=pathlib.Path('.')):
     for package_root in find_package_roots(root_folder):
-        yield Package(package_root)
+        try:
+            yield Package(package_root)
+        except Exception as e:
+            print(f'{Fore.YELLOW}Unable to parse package at {package_root} because {e}. Skipping...{Fore.RESET}',
+                  file=sys.stderr)
