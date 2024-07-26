@@ -142,7 +142,7 @@ class PackageXML(SingularPackageFile, PackageTextFile):
     def name(self):
         name_tags = self.root.getElementsByTagName('name')
         if not name_tags:
-            return
+            raise RuntimeError('Unable to determine package name')
         name_tag = name_tags[0]
         return name_tag.firstChild.nodeValue
 
@@ -232,8 +232,8 @@ class PackageXML(SingularPackageFile, PackageTextFile):
     def set_license(self, license_str):
         el = self.get_license_element()
         if not el:
-            # TODO: Create license element
-            pass
+            self.create_new_tag('license', license_str)
+            return
 
         if license != el.childNodes[0].nodeValue:
             el.childNodes[0].nodeValue = license_str
