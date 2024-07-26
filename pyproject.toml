@@ -15,6 +15,7 @@ maintainers = [
 
 dependencies = [
   "betsy-ros",
+  "colorama",
   "ruamel.yaml",
   "stylish-cmake-parser",
   "PyYAML",

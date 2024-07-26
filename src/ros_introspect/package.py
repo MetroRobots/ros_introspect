@@ -1,7 +1,9 @@
 import collections
+from colorama import Fore, init
 from enum import IntEnum
 import pathlib
 import shutil
+import sys
 
 from betsy_ros import ROSInterface
 
@@ -10,6 +12,8 @@ from .ros_resources import ROSResources
 from .util import convert_to_underscore_notation
 
 DependencyType = IntEnum('DependencyType', ['BUILD', 'RUN', 'BUILD_EXPORT', 'TEST'])
+
+init()
 
 
 class PackageFile:
@@ -223,7 +227,7 @@ class Package:
                 if rel_path in self.components_by_name:
                     self.components_by_name[rel_path].tags.add(tag)
                 else:
-                    print(f'Cannot find {rel_fn} in package {self.name}')
+                    print(f'{Fore.YELLOW}Cannot find {rel_fn} in package {self.name}{Fore.RESET}', file=sys.stderr)
 
     def get_source_by_tags(self, tags, language=None):
         if isinstance(tags, str):
