@@ -38,6 +38,14 @@ def dictionary_subtract(alpha, beta):
         elif v == beta[k]:
             del alpha[k]
             changed = True
+        elif isinstance(v, float):
+            delta = abs(beta[k] - v)
+            if delta < 1e-4:
+                del alpha[k]
+                changed = True
+            else:
+                alpha[k] = round(v, 7)
+                changed = True
     return changed
 
 
