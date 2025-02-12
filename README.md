@@ -20,7 +20,7 @@ for package in find_packages('/home/dlu/ros2_ws/src'):
 
 ## Installation
 
-[![PyPI version](https://badge.fury.io/py/ros-introspect.svg)](https://badge.fury.io/py/ros-introspect)
+[![PyPI version](https://badge.fury.io/py/ros-introspect.svg)](https://badge.fury.io/py/ros-introspect) [![codecov](https://codecov.io/gh/MetroRobots/ros_introspect/graph/badge.svg?token=W08ZMEME4H)](https://codecov.io/gh/MetroRobots/ros_introspect)
 
     sudo pip3 install ros-introspect
 
